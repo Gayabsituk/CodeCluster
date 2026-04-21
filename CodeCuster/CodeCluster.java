@@ -1,10 +1,12 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
 import javax.swing.border.*;
+import javax.sound.sampled.*;
 
 public class CodeCluster extends JFrame {
     private CardLayout cardLayout;
@@ -12,8 +14,10 @@ public class CodeCluster extends JFrame {
     private GameData gameData;
     private String currentPlayer;
     private int currentLevel = 1;
+    private SoundManager soundManager;
 
     public CodeCluster() {
+        soundManager = new SoundManager();
         gameData = new GameData();
         gameData.loadData();
 
@@ -25,10 +29,10 @@ public class CodeCluster extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        mainPanel.add(new MainMenuPanel(this), "menu");
-        mainPanel.add(new NameSelectionPanel(this), "nameSelection");
-        mainPanel.add(new SettingsPanel(this), "settings");
-        mainPanel.add(new LeaderboardPanel(this), "leaderboard");
+        mainPanel.add(new MainMenuPanel(this, soundManager), "menu");
+        mainPanel.add(new NameSelectionPanel(this, soundManager), "nameSelection");
+        mainPanel.add(new SettingsPanel(this, soundManager), "settings");
+        mainPanel.add(new LeaderboardPanel(this, soundManager), "leaderboard");
 
         add(mainPanel);
         showPanel("menu");
@@ -58,6 +62,10 @@ public class CodeCluster extends JFrame {
         }
     }
 
+    public SoundManager getSoundManager() {
+        return soundManager;
+    }
+
     public GameData getGameData() {
         return gameData;
     }
@@ -79,6 +87,70 @@ public class CodeCluster extends JFrame {
             }
             new CodeCluster();
         });
+    }
+}
+
+class SoundManager {
+    private boolean soundEnabled = true;
+
+    public void playClick() {
+        if (!soundEnabled) return;
+        playBeep(800, 100);
+    }
+
+    public void playSuccess() {
+        if (!soundEnabled) return;
+        playBeep(1000, 150);
+        try { Thread.sleep(100); } catch (InterruptedException e) {}
+        playBeep(1200, 150);
+    }
+
+    public void playError() {
+        if (!soundEnabled) return;
+        playBeep(400, 150);
+        try { Thread.sleep(50); } catch (InterruptedException e) {}
+        playBeep(300, 150);
+    }
+
+    public void playGameOver() {
+        if (!soundEnabled) return;
+        playBeep(400, 200);
+        try { Thread.sleep(100); } catch (InterruptedException e) {}
+        playBeep(300, 200);
+        try { Thread.sleep(100); } catch (InterruptedException e) {}
+        playBeep(200, 300);
+    }
+
+    private void playBeep(int frequency, int duration) {
+        try {
+            float sampleRate = 44100f;
+            int samples = Math.round(sampleRate * duration / 1000);
+            byte[] tone = new byte[samples];
+            double toneHz = frequency;
+
+            for (int i = 0; i < samples; i++) {
+                double sample = Math.sin(2.0 * Math.PI * toneHz * i / sampleRate);
+                tone[i] = (byte) (sample * 100);
+            }
+
+            AudioFormat format = new AudioFormat(sampleRate, 8, 1, true, false);
+            SourceDataLine line = AudioSystem.getSourceDataLine(format);
+            line.open();
+            line.start();
+            line.write(tone, 0, tone.length);
+            line.drain();
+            line.close();
+        } catch (Exception e) {
+            // Sound failed, continue silently
+        }
+    }
+
+    public void setSoundEnabled(boolean enabled) {
+        this.soundEnabled = enabled;
+    }
+
+    public boolean isSoundEnabled() {
+        return soundEnabled;
     }
 }
 
@@ -329,14 +401,14 @@ class GameState implements Serializable {
 }
 
 class MainMenuPanel extends JPanel {
-    public MainMenuPanel(CodeCluster game) {
+    public MainMenuPanel(CodeCluster game, SoundManager soundManager) {
         setLayout(new BorderLayout());
         setBackground(new Color(99, 102, 241));
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setOpaque(false);
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 100));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 30, 100));
 
         JLabel titleLabel = new JLabel("CODE CLUSTER");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 72));
@@ -352,29 +424,43 @@ class MainMenuPanel extends JPanel {
         centerPanel.add(titleLabel);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         centerPanel.add(subtitleLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 60)));
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 80)));
 
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
         buttonsPanel.setOpaque(false);
+        buttonsPanel.setMaximumSize(new Dimension(400, 400));
+        buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JButton startButton = createMenuButton("Start Game", new Color(255, 255, 255));
-        startButton.addActionListener(e -> game.showPanel("nameSelection"));
+        startButton.addActionListener(e -> {
+            soundManager.playClick();
+            game.showPanel("nameSelection");
+        });
         buttonsPanel.add(startButton);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
 
         JButton settingsButton = createMenuButton("Settings", new Color(255, 255, 255, 50));
-        settingsButton.addActionListener(e -> game.showPanel("settings"));
+        settingsButton.addActionListener(e -> {
+            soundManager.playClick();
+            game.showPanel("settings");
+        });
         buttonsPanel.add(settingsButton);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
 
         JButton leaderboardButton = createMenuButton("Leaderboard", new Color(255, 255, 255, 50));
-        leaderboardButton.addActionListener(e -> game.showPanel("leaderboard"));
+        leaderboardButton.addActionListener(e -> {
+            soundManager.playClick();
+            game.showPanel("leaderboard");
+        });
         buttonsPanel.add(leaderboardButton);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
 
         JButton exitButton = createMenuButton("Exit", new Color(239, 68, 68, 50));
-        exitButton.addActionListener(e -> System.exit(0));
+        exitButton.addActionListener(e -> {
+            soundManager.playClick();
+            System.exit(0);
+        });
         buttonsPanel.add(exitButton);
 
         centerPanel.add(buttonsPanel);
@@ -398,8 +484,10 @@ class MainMenuPanel extends JPanel {
     }
 }
 
+
+
 class NameSelectionPanel extends JPanel {
-    public NameSelectionPanel(CodeCluster game) {
+    public NameSelectionPanel(CodeCluster game, SoundManager soundManager) {
         setLayout(new BorderLayout());
         setBackground(new Color(99, 102, 241));
 
@@ -440,6 +528,7 @@ class NameSelectionPanel extends JPanel {
         submitButton.setForeground(Color.WHITE);
         submitButton.setMaximumSize(new Dimension(440, 50));
         submitButton.addActionListener(e -> {
+            soundManager.playClick();
             String name = nameField.getText().trim();
             if (!name.isEmpty()) {
                 game.getGameData().addPlayerName(name);
@@ -467,7 +556,10 @@ class NameSelectionPanel extends JPanel {
                 JButton nameButton = new JButton(name);
                 nameButton.setMaximumSize(new Dimension(440, 40));
                 nameButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-                nameButton.addActionListener(e -> game.startGame(name));
+                nameButton.addActionListener(e -> {
+                    soundManager.playClick();
+                    game.startGame(name);
+                });
                 namesPanel.add(nameButton);
                 namesPanel.add(Box.createRigidArea(new Dimension(0, 5)));
             }
@@ -506,7 +598,7 @@ class NameSelectionPanel extends JPanel {
 }
 
 class SettingsPanel extends JPanel {
-    public SettingsPanel(CodeCluster game) {
+    public SettingsPanel(CodeCluster game, SoundManager soundManager) {
         setLayout(new BorderLayout());
         setBackground(new Color(99, 102, 241));
 
@@ -526,7 +618,10 @@ class SettingsPanel extends JPanel {
 
         JCheckBox sfxCheckBox = new JCheckBox("Sound Effects", game.getGameData().isSfxEnabled());
         sfxCheckBox.setFont(new Font("Arial", Font.PLAIN, 20));
-        sfxCheckBox.addActionListener(e -> game.getGameData().setSfxEnabled(sfxCheckBox.isSelected()));
+        sfxCheckBox.addActionListener(e -> {
+            game.getGameData().setSfxEnabled(sfxCheckBox.isSelected());
+            soundManager.setSoundEnabled(sfxCheckBox.isSelected());
+        });
 
         whitePanel.add(titleLabel);
         whitePanel.add(Box.createRigidArea(new Dimension(0, 40)));
@@ -539,7 +634,10 @@ class SettingsPanel extends JPanel {
         doneButton.setForeground(Color.WHITE);
         doneButton.setMaximumSize(new Dimension(200, 50));
         doneButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        doneButton.addActionListener(e -> game.showPanel("menu"));
+        doneButton.addActionListener(e -> {
+            soundManager.playClick();
+            game.showPanel("menu");
+        });
 
         whitePanel.add(doneButton);
 
@@ -552,39 +650,82 @@ class SettingsPanel extends JPanel {
 }
 
 class LeaderboardPanel extends JPanel {
-    public LeaderboardPanel(CodeCluster game) {
+    private CodeCluster game;
+    private SoundManager soundManager;
+    private JTable table;
+    private JTextField searchField;
+    private JComboBox<String> levelFilter;
+    private JComboBox<String> sortOrder;
+    private DefaultTableModel tableModel;
+
+    public LeaderboardPanel(CodeCluster game, SoundManager soundManager) {
+        this.game = game;
+        this.soundManager = soundManager;
         setLayout(new BorderLayout());
         setBackground(new Color(99, 102, 241));
 
+        JPanel wrapperPanel = new JPanel(new BorderLayout());
+        wrapperPanel.setOpaque(false);
+        wrapperPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+
         JPanel whitePanel = new JPanel(new BorderLayout());
         whitePanel.setBackground(Color.WHITE);
-        whitePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        whitePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        // Title
         JLabel titleLabel = new JLabel("Leaderboard", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
 
-        ArrayList<Score> allScores = game.getGameData().getFlatScores();
-        allScores.sort((a, b) -> Integer.compare(b.getScore(), a.getScore()));
+        // Control Panel
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        controlPanel.setBackground(Color.WHITE);
 
+        JLabel searchLabel = new JLabel("Search Player:");
+        searchLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        searchField = new JTextField(15);
+        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
+        searchField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                updateTable();
+            }
+        });
+        
+        JLabel levelLabel = new JLabel("Level:");
+        levelLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        String[] levels = {"All Levels", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"};
+        levelFilter = new JComboBox<>(levels);
+        levelFilter.setFont(new Font("Arial", Font.PLAIN, 14));
+        levelFilter.addActionListener(e -> updateTable());
+
+        JLabel sortLabel = new JLabel("Sort:");
+        sortLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        String[] sortOptions = {"Highest to Lowest", "Lowest to Highest"};
+        sortOrder = new JComboBox<>(sortOptions);
+        sortOrder.setFont(new Font("Arial", Font.PLAIN, 14));
+        sortOrder.addActionListener(e -> updateTable());
+
+        controlPanel.add(searchLabel);
+        controlPanel.add(searchField);
+        controlPanel.add(levelLabel);
+        controlPanel.add(levelFilter);
+        controlPanel.add(sortLabel);
+        controlPanel.add(sortOrder);
+
+        // Table
         String[] columns = {"Rank", "Player", "Score", "Level", "Date"};
-        Object[][] data = new Object[allScores.size()][5];
-
-        for (int i = 0; i < allScores.size(); i++) {
-            Score score = allScores.get(i);
-            data[i][0] = i + 1;
-            data[i][1] = score.getPlayerName();
-            data[i][2] = score.getScore();
-            data[i][3] = "Level " + score.getLevel();
-            data[i][4] = score.getDate();
-        }
-
-        JTable table = new JTable(data, columns);
-        table.setFont(new Font("Arial", Font.PLAIN, 16));
-        table.setRowHeight(40);
-        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 18));
+        tableModel = new DefaultTableModel(new Object[0][0], columns) {
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new JTable(tableModel);
+        table.setFont(new Font("Arial", Font.PLAIN, 14));
+        table.setRowHeight(30);
+        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
 
         JScrollPane scrollPane = new JScrollPane(table);
 
+        // Back Button
         JButton backButton = new JButton("Back to Menu");
         backButton.setFont(new Font("Arial", Font.BOLD, 18));
         backButton.setBackground(new Color(168, 85, 247));
@@ -592,16 +733,57 @@ class LeaderboardPanel extends JPanel {
         backButton.addActionListener(e -> game.showPanel("menu"));
 
         whitePanel.add(titleLabel, BorderLayout.NORTH);
+        whitePanel.add(controlPanel, BorderLayout.BEFORE_FIRST_LINE);
         whitePanel.add(scrollPane, BorderLayout.CENTER);
         whitePanel.add(backButton, BorderLayout.SOUTH);
 
-        add(whitePanel, BorderLayout.CENTER);
-        setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        wrapperPanel.add(whitePanel, BorderLayout.CENTER);
+        add(wrapperPanel, BorderLayout.CENTER);
+
+        updateTable();
+    }
+
+    private void updateTable() {
+        tableModel.setRowCount(0);
+
+        ArrayList<Score> allScores = game.getGameData().getFlatScores();
+
+        // Apply level filter
+        int selectedLevel = levelFilter.getSelectedIndex();
+        if (selectedLevel > 0) {
+            allScores.removeIf(s -> s.getLevel() != selectedLevel);
+        }
+
+        // Apply search filter
+        String searchText = searchField.getText().toLowerCase().trim();
+        if (!searchText.isEmpty()) {
+            allScores.removeIf(s -> !s.getPlayerName().toLowerCase().contains(searchText));
+        }
+
+        // Apply sort order
+        if (sortOrder.getSelectedIndex() == 0) {
+            allScores.sort((a, b) -> Integer.compare(b.getScore(), a.getScore()));
+        } else {
+            allScores.sort((a, b) -> Integer.compare(a.getScore(), b.getScore()));
+        }
+
+        // Populate table
+        for (int i = 0; i < allScores.size(); i++) {
+            Score score = allScores.get(i);
+            tableModel.addRow(new Object[]{
+                i + 1,
+                score.getPlayerName(),
+                score.getScore(),
+                "Level " + score.getLevel(),
+                score.getDate()
+            });
+        }
     }
 }
 
 class GameBoardPanel extends JPanel {
     private CodeCluster game;
+    private SoundManager soundManager;
     private String playerName;
     private int level;
     private ArrayList<Category> categories;
@@ -620,6 +802,7 @@ class GameBoardPanel extends JPanel {
 
     public GameBoardPanel(CodeCluster game, String playerName, int level) {
         this.game = game;
+        this.soundManager = game.getSoundManager();
         this.playerName = playerName;
         this.level = level;
         this.categories = game.getGameData().getLevelCategories(level);
@@ -676,7 +859,7 @@ class GameBoardPanel extends JPanel {
 
         JLabel instructionLabel = new JLabel("Create four groups of four!", SwingConstants.CENTER);
         instructionLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        instructionLabel.setForeground(Color.WHITE);
+        instructionLabel.setForeground(Color.GRAY);
         instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         hintLabel = new JLabel(" ");
@@ -704,6 +887,7 @@ class GameBoardPanel extends JPanel {
         deselectButton.addActionListener(e -> deselectAll());
         submitButton.addActionListener(e -> submitGuess());
         backButton.addActionListener(e -> {
+            soundManager.playClick();
             timer.stop();
             game.showPanel("menu");
         });
@@ -745,14 +929,17 @@ class GameBoardPanel extends JPanel {
                 wordButton.setFont(new Font("Arial", Font.BOLD, 14));
 
                 if (selectedWords.contains(word)) {
-                    wordButton.setBackground(new Color(55, 65, 81));
-                    wordButton.setForeground(Color.WHITE);
+                    wordButton.setBackground(new Color(34, 197, 94));
+                    wordButton.setForeground(Color.GREEN);
                 } else {
                     wordButton.setBackground(new Color(243, 244, 246));
                     wordButton.setForeground(Color.BLACK);
                 }
 
-                wordButton.addActionListener(e -> toggleWord(word));
+                wordButton.addActionListener(e -> {
+                    soundManager.playClick();
+                    toggleWord(word);
+                });
                 wordsPanel.add(wordButton);
             }
         }
@@ -885,36 +1072,40 @@ class GameBoardPanel extends JPanel {
         long timeTaken = (System.currentTimeMillis() - startTime) / 1000;
         ArrayList<String> achievements = new ArrayList<>();
         int achievementScore = 0;
+        boolean levelCompleted = solvedCategories.size() == categories.size();
 
-        if (timeTaken < 60) {
-            achievements.add("Speed Demon");
-            achievementScore += 500;
-        }
-        if (mistakes == 0) {
-            achievements.add("Perfect Game");
-            achievementScore += 1000;
-        }
-        if (solvedCategories.size() == categories.size()) {
+        if (levelCompleted) {
+            if (timeTaken < 60) {
+                achievements.add("Speed Demon");
+                achievementScore += 500;
+            }
+            if (mistakes == 0) {
+                achievements.add("Perfect Game");
+                achievementScore += 1000;
+            }
             achievements.add("Master Mind");
             achievementScore += 750;
-        }
-        if (timeLeft >= 30) {
-            achievements.add("Time Lord");
-            achievementScore += 300;
+            if (timeLeft >= 30) {
+                achievements.add("Time Lord");
+                achievementScore += 300;
+            }
         }
 
         int baseScore = solvedCategories.size() * 100;
         int timeBonus = Math.max(0, timeLeft * 10);
         int totalScore = baseScore + timeBonus + achievementScore - (mistakes * 50);
 
-        Score score = new Score(playerName, totalScore, level, 1, achievements);
-        game.getGameData().addScore(score);
+        // Only save score if level was completed successfully
+        if (levelCompleted && totalScore > 0) {
+            Score score = new Score(playerName, totalScore, level, 1, achievements);
+            game.getGameData().addScore(score);
+        }
 
-        showGameCompleteDialog(totalScore, achievements);
+        showGameCompleteDialog(totalScore, achievements, levelCompleted);
     }
 
-    private void showGameCompleteDialog(int score, ArrayList<String> achievements) {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Level Complete!", true);
+    private void showGameCompleteDialog(int score, ArrayList<String> achievements, boolean levelCompleted) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), levelCompleted ? "Level Complete!" : "Game Over", true);
         dialog.setLayout(new BorderLayout());
         dialog.setSize(500, 400);
         dialog.setLocationRelativeTo(this);
@@ -923,7 +1114,13 @@ class GameBoardPanel extends JPanel {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel titleLabel = new JLabel(level == 5 ? "Game Complete!" : "Level Complete!");
+        String title;
+        if (levelCompleted) {
+            title = level == 5 ? "Game Complete!" : "Level Complete!";
+        } else {
+            title = "Game Over!";
+        }
+        JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -936,7 +1133,7 @@ class GameBoardPanel extends JPanel {
         panel.add(scoreLabel);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        if (!achievements.isEmpty()) {
+        if (levelCompleted && !achievements.isEmpty()) {
             JLabel achLabel = new JLabel("Achievements:");
             achLabel.setFont(new Font("Arial", Font.BOLD, 20));
             achLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
