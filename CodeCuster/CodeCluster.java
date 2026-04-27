@@ -95,14 +95,20 @@ class SoundManager {
 
     public void playClick() {
         if (!soundEnabled) return;
-        playBeep(800, 100);
+        Thread soundThread = new Thread(() -> playBeep(800, 100), "SoundClickThread");
+        soundThread.setDaemon(true);
+        soundThread.start();
     }
 
     public void playSuccess() {
         if (!soundEnabled) return;
-        playBeep(1000, 150);
-        try { Thread.sleep(100); } catch (InterruptedException e) {}
-        playBeep(1200, 150);
+        Thread soundThread = new Thread(() -> {
+            playBeep(1000, 150);
+            try { Thread.sleep(100); } catch (InterruptedException e) {}
+            playBeep(1200, 150);
+        }, "SoundSuccessThread");
+        soundThread.setDaemon(true);
+        soundThread.start();
     }
 
     public void playError() {
@@ -157,7 +163,7 @@ class SoundManager {
 class GameData {
     private LinkedList<String> playerNames;
     private TreeMap<String, ArrayList<Score>> scores;
-    private HashMap<Integer, ArrayList<Category>> levelData;
+    private HashMap<Integer, ArrayList<ArrayList<Category>>> levelData;
     private boolean sfxEnabled;
     private Stack<GameState> gameHistory;
 
@@ -171,53 +177,107 @@ class GameData {
     }
 
     private void initializeLevelData() {
-        // Level 1 - 4 categories
-        ArrayList<Category> level1 = new ArrayList<>();
-        level1.add(new Category("Java Keywords", new String[]{"STATIC", "VOID", "CLASS", "PUBLIC"}));
-        level1.add(new Category("Data Structures", new String[]{"ARRAY", "STACK", "QUEUE", "TREE"}));
-        level1.add(new Category("Primitive Types", new String[]{"INT", "BOOLEAN", "CHAR", "DOUBLE"}));
-        level1.add(new Category("Common Methods", new String[]{"GET", "SET", "PUSH", "POP"}));
-        levelData.put(1, level1);
+        // Level 1 - 2 alternative sets of 4 categories
+        ArrayList<ArrayList<Category>> level1Sets = new ArrayList<>();
+        ArrayList<Category> level1a = new ArrayList<>();
+        level1a.add(new Category("Java Keywords", new String[]{"STATIC", "VOID", "CLASS", "PUBLIC"}));
+        level1a.add(new Category("Data Structures", new String[]{"ARRAY", "STACK", "QUEUE", "TREE"}));
+        level1a.add(new Category("Primitive Types", new String[]{"INT", "BOOLEAN", "CHAR", "DOUBLE"}));
+        level1a.add(new Category("Common Methods", new String[]{"GET", "SET", "PUSH", "POP"}));
+        level1Sets.add(level1a);
 
-        // Level 2 - 4 categories
-        ArrayList<Category> level2 = new ArrayList<>();
-        level2.add(new Category("OOP Concepts", new String[]{"POLYMORPHISM", "INHERITANCE", "ENCAPSULATION", "ABSTRACTION"}));
-        level2.add(new Category("Loop Keywords", new String[]{"FOR", "WHILE", "DO", "FOREACH"}));
-        level2.add(new Category("String Methods", new String[]{"LENGTH", "SUBSTRING", "CONCAT", "TRIM"}));
-        level2.add(new Category("Boolean Operators", new String[]{"AND", "OR", "NOT", "XOR"}));
-        levelData.put(2, level2);
+        ArrayList<Category> level1b = new ArrayList<>();
+        level1b.add(new Category("Control Keywords", new String[]{"IF", "ELSE", "SWITCH", "CASE"}));
+        level1b.add(new Category("Collection Types", new String[]{"LIST", "SET", "MAP", "QUEUE"}));
+        level1b.add(new Category("Numeric Types", new String[]{"BYTE", "SHORT", "INT", "LONG"}));
+        level1b.add(new Category("Common Operators", new String[]{"PLUS", "MINUS", "MULTIPLY", "DIVIDE"}));
+        level1Sets.add(level1b);
+        levelData.put(1, level1Sets);
 
-        // Level 3 - 5 categories
-        ArrayList<Category> level3 = new ArrayList<>();
-        level3.add(new Category("Java Collections", new String[]{"LIST", "MAP", "SET", "HASHMAP"}));
-        level3.add(new Category("Exception Handling", new String[]{"TRY", "CATCH", "THROW", "FINALLY"}));
-        level3.add(new Category("Access Modifiers", new String[]{"PRIVATE", "PROTECTED", "PACKAGE", "DEFAULT"}));
-        level3.add(new Category("Wrapper Classes", new String[]{"INTEGER", "LONG", "FLOAT", "CHARACTER"}));
-        level3.add(new Category("Keywords", new String[]{"FINAL", "SUPER", "THIS", "EXTENDS"}));
-        levelData.put(3, level3);
+        // Level 2 - 2 alternative sets of 4 categories
+        ArrayList<ArrayList<Category>> level2Sets = new ArrayList<>();
+        ArrayList<Category> level2a = new ArrayList<>();
+        level2a.add(new Category("OOP Concepts", new String[]{"POLYMORPHISM", "INHERITANCE", "ENCAPSULATION", "ABSTRACTION"}));
+        level2a.add(new Category("Loop Keywords", new String[]{"FOR", "WHILE", "DO", "FOREACH"}));
+        level2a.add(new Category("String Methods", new String[]{"LENGTH", "SUBSTRING", "CONCAT", "TRIM"}));
+        level2a.add(new Category("Boolean Operators", new String[]{"AND", "OR", "NOT", "XOR"}));
+        level2Sets.add(level2a);
 
-        // Level 4 - 5 categories
-        ArrayList<Category> level4 = new ArrayList<>();
-        level4.add(new Category("Design Patterns", new String[]{"SINGLETON", "FACTORY", "OBSERVER", "DECORATOR"}));
-        level4.add(new Category("Testing Terms", new String[]{"JUNIT", "MOCK", "ASSERT", "TEST"}));
-        level4.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "WAITING"}));
-        level4.add(new Category("Memory Areas", new String[]{"HEAP", "STACK", "METASPACE", "POOL"}));
-        level4.add(new Category("Synchronization", new String[]{"LOCK", "SYNCHRONIZED", "VOLATILE", "ATOMIC"}));
-        levelData.put(4, level4);
+        ArrayList<Category> level2b = new ArrayList<>();
+        level2b.add(new Category("Array Methods", new String[]{"SORT", "FILL", "COPY", "BINARYSEARCH"}));
+        level2b.add(new Category("Exception Types", new String[]{"IOEXCEPTION", "NULLPOINTER", "ARITHMETIC", "INDEXOUTOFBOUNDS"}));
+        level2b.add(new Category("Access Modifiers", new String[]{"PUBLIC", "PRIVATE", "PROTECTED", "DEFAULT"}));
+        level2b.add(new Category("Inheritance Keywords", new String[]{"EXTENDS", "IMPLEMENTS", "SUPER", "THIS"}));
+        level2Sets.add(level2b);
+        levelData.put(2, level2Sets);
 
-        // Level 5 - 6 categories
-        ArrayList<Category> level5 = new ArrayList<>();
-        level5.add(new Category("Spring Framework", new String[]{"BEAN", "AUTOWIRED", "COMPONENT", "SERVICE"}));
-        level5.add(new Category("SQL Keywords", new String[]{"SELECT", "INSERT", "UPDATE", "DELETE"}));
-        level5.add(new Category("Git Commands", new String[]{"COMMIT", "PUSH", "PULL", "MERGE"}));
-        level5.add(new Category("HTTP Methods", new String[]{"GET", "POST", "PUT", "PATCH"}));
-        level5.add(new Category("JSON Operations", new String[]{"PARSE", "STRINGIFY", "SERIALIZE", "DESERIALIZE"}));
-        level5.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}));
-        levelData.put(5, level5);
+        // Level 3 - 2 alternative sets of 5 categories
+        ArrayList<ArrayList<Category>> level3Sets = new ArrayList<>();
+        ArrayList<Category> level3a = new ArrayList<>();
+        level3a.add(new Category("Java Collections", new String[]{"LIST", "MAP", "SET", "HASHMAP"}));
+        level3a.add(new Category("Exception Handling", new String[]{"TRY", "CATCH", "THROW", "FINALLY"}));
+        level3a.add(new Category("Access Modifiers", new String[]{"PRIVATE", "PROTECTED", "PACKAGE", "DEFAULT"}));
+        level3a.add(new Category("Wrapper Classes", new String[]{"INTEGER", "LONG", "FLOAT", "CHARACTER"}));
+        level3a.add(new Category("Keywords", new String[]{"FINAL", "SUPER", "THIS", "EXTENDS"}));
+        level3Sets.add(level3a);
+
+        ArrayList<Category> level3b = new ArrayList<>();
+        level3b.add(new Category("Stream Methods", new String[]{"FILTER", "MAP", "COLLECT", "FOR_EACH"}));
+        level3b.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "TERMINATED"}));
+        level3b.add(new Category("Numeric Wrappers", new String[]{"DOUBLE", "FLOAT", "INTEGER", "LONG"}));
+        level3b.add(new Category("String Builders", new String[]{"APPEND", "INSERT", "DELETE", "TOSTRING"}));
+        level3b.add(new Category("Concurrency", new String[]{"SYNCHRONIZED", "VOLATILE", "LOCK", "ATOMIC"}));
+        level3Sets.add(level3b);
+        levelData.put(3, level3Sets);
+
+        // Level 4 - 2 alternative sets of 5 categories
+        ArrayList<ArrayList<Category>> level4Sets = new ArrayList<>();
+        ArrayList<Category> level4a = new ArrayList<>();
+        level4a.add(new Category("Design Patterns", new String[]{"SINGLETON", "FACTORY", "OBSERVER", "DECORATOR"}));
+        level4a.add(new Category("Testing Terms", new String[]{"JUNIT", "MOCK", "ASSERT", "TEST"}));
+        level4a.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "WAITING"}));
+        level4a.add(new Category("Memory Areas", new String[]{"HEAP", "STACK", "METASPACE", "POOL"}));
+        level4a.add(new Category("Synchronization", new String[]{"LOCK", "SYNCHRONIZED", "VOLATILE", "ATOMIC"}));
+        level4Sets.add(level4a);
+
+        ArrayList<Category> level4b = new ArrayList<>();
+        level4b.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}));
+        level4b.add(new Category("Web Concepts", new String[]{"HTTP", "HTTPS", "REST", "SOAP"}));
+        level4b.add(new Category("Database Terms", new String[]{"SQL", "INDEX", "JOIN", "TRANSACTION"}));
+        level4b.add(new Category("Caching", new String[]{"MEMCACHED", "REDIS", "GUAVA", "CACHE"}));
+        level4b.add(new Category("Testing Frameworks", new String[]{"TESTNG", "SPOCK", "CUCUMBER", "MOCKITO"}));
+        level4Sets.add(level4b);
+        levelData.put(4, level4Sets);
+
+        // Level 5 - 2 alternative sets of 6 categories
+        ArrayList<ArrayList<Category>> level5Sets = new ArrayList<>();
+        ArrayList<Category> level5a = new ArrayList<>();
+        level5a.add(new Category("Spring Framework", new String[]{"BEAN", "AUTOWIRED", "COMPONENT", "SERVICE"}));
+        level5a.add(new Category("SQL Keywords", new String[]{"SELECT", "INSERT", "UPDATE", "DELETE"}));
+        level5a.add(new Category("Git Commands", new String[]{"COMMIT", "PUSH", "PULL", "MERGE"}));
+        level5a.add(new Category("HTTP Methods", new String[]{"GET", "POST", "PUT", "PATCH"}));
+        level5a.add(new Category("JSON Operations", new String[]{"PARSE", "STRINGIFY", "SERIALIZE", "DESERIALIZE"}));
+        level5a.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}));
+        level5Sets.add(level5a);
+
+        ArrayList<Category> level5b = new ArrayList<>();
+        level5b.add(new Category("Cloud Platforms", new String[]{"AZURE", "AWS", "GCP", "HEROKU"}));
+        level5b.add(new Category("CI/CD", new String[]{"JENKINS", "GITHUB", "GITLAB", "AZUREDEVOPS"}));
+        level5b.add(new Category("Container Tools", new String[]{"DOCKER", "KUBERNETES", "PODMAN", "SWARM"}));
+        level5b.add(new Category("API Methods", new String[]{"GET", "POST", "DELETE", "PATCH"}));
+        level5b.add(new Category("Data Formats", new String[]{"JSON", "XML", "YAML", "CSV"}));
+        level5b.add(new Category("Security", new String[]{"OAUTH", "JWT", "SSL", "TLS"}));
+        level5Sets.add(level5b);
+        levelData.put(5, level5Sets);
     }
 
     public ArrayList<Category> getLevelCategories(int level) {
-        return levelData.get(level);
+        ArrayList<ArrayList<Category>> sets = levelData.get(level);
+        if (sets == null || sets.isEmpty()) {
+            return new ArrayList<>();
+        }
+        ArrayList<Category> selected = sets.get(new Random().nextInt(sets.size()));
+        return new ArrayList<>(selected);
     }
 
     public void addPlayerName(String name) {
@@ -432,7 +492,7 @@ class MainMenuPanel extends JPanel {
         buttonsPanel.setMaximumSize(new Dimension(400, 400));
         buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JButton startButton = createMenuButton("Start Game", new Color(255, 255, 255));
+        JButton startButton = createMenuButton("Start Game", new Color(34, 197, 94));
         startButton.addActionListener(e -> {
             soundManager.playClick();
             game.showPanel("nameSelection");
@@ -440,7 +500,7 @@ class MainMenuPanel extends JPanel {
         buttonsPanel.add(startButton);
         buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
 
-        JButton settingsButton = createMenuButton("Settings", new Color(255, 255, 255, 50));
+        JButton settingsButton = createMenuButton("Settings", new Color(59, 130, 246));
         settingsButton.addActionListener(e -> {
             soundManager.playClick();
             game.showPanel("settings");
@@ -448,7 +508,7 @@ class MainMenuPanel extends JPanel {
         buttonsPanel.add(settingsButton);
         buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
 
-        JButton leaderboardButton = createMenuButton("Leaderboard", new Color(255, 255, 255, 50));
+        JButton leaderboardButton = createMenuButton("Leaderboard", new Color(249, 115, 22));
         leaderboardButton.addActionListener(e -> {
             soundManager.playClick();
             game.showPanel("leaderboard");
@@ -456,7 +516,7 @@ class MainMenuPanel extends JPanel {
         buttonsPanel.add(leaderboardButton);
         buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
 
-        JButton exitButton = createMenuButton("Exit", new Color(239, 68, 68, 50));
+        JButton exitButton = createMenuButton("Exit", new Color(239, 68, 68));
         exitButton.addActionListener(e -> {
             soundManager.playClick();
             System.exit(0);
@@ -473,10 +533,14 @@ class MainMenuPanel extends JPanel {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 24));
         button.setBackground(bg);
-        button.setForeground(bg.equals(Color.WHITE) ? Color.BLACK : Color.WHITE);
+        button.setForeground(Color.BLACK);
+        button.setFocusable(false);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         button.setPreferredSize(new Dimension(400, 70));
+        button.setMinimumSize(new Dimension(400, 70));
         button.setMaximumSize(new Dimension(400, 70));
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -491,10 +555,16 @@ class NameSelectionPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(99, 102, 241));
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setOpaque(false);
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 100));
+        // Main container with vertical centering
+        JPanel mainContainer = new JPanel();
+        mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
+        mainContainer.setOpaque(false);
+
+        // Title section
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setOpaque(false);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
 
         JLabel titleLabel = new JLabel("Welcome Player!");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 48));
@@ -506,38 +576,29 @@ class NameSelectionPanel extends JPanel {
         subtitleLabel.setForeground(Color.WHITE);
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        centerPanel.add(Box.createVerticalGlue());
-        centerPanel.add(titleLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        centerPanel.add(subtitleLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+        titlePanel.add(titleLabel);
+        titlePanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        titlePanel.add(subtitleLabel);
 
+        mainContainer.add(Box.createVerticalGlue());
+        mainContainer.add(titlePanel);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 50)));
+
+        // White panel with input fields - horizontally centered
         JPanel whitePanel = new JPanel();
         whitePanel.setLayout(new BoxLayout(whitePanel, BoxLayout.Y_AXIS));
         whitePanel.setBackground(Color.WHITE);
         whitePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         whitePanel.setMaximumSize(new Dimension(500, 400));
 
+        JLabel enterLabel = new JLabel("Enter your name:");
+        enterLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        whitePanel.add(enterLabel);
+        whitePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
         JTextField nameField = new JTextField();
         nameField.setFont(new Font("Arial", Font.PLAIN, 20));
         nameField.setMaximumSize(new Dimension(440, 50));
-
-        JButton submitButton = new JButton("Start Playing");
-        submitButton.setFont(new Font("Arial", Font.BOLD, 20));
-        submitButton.setBackground(new Color(168, 85, 247));
-        submitButton.setForeground(Color.WHITE);
-        submitButton.setMaximumSize(new Dimension(440, 50));
-        submitButton.addActionListener(e -> {
-            soundManager.playClick();
-            String name = nameField.getText().trim();
-            if (!name.isEmpty()) {
-                game.getGameData().addPlayerName(name);
-                game.startGame(name);
-            }
-        });
-
-        whitePanel.add(new JLabel("Enter your name:"));
-        whitePanel.add(Box.createRigidArea(new Dimension(0, 10)));
         whitePanel.add(nameField);
         whitePanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
@@ -545,17 +606,19 @@ class NameSelectionPanel extends JPanel {
         LinkedList<String> savedNames = game.getGameData().getPlayerNames();
         if (!savedNames.isEmpty()) {
             JLabel savedLabel = new JLabel("Or select a saved name:");
+            savedLabel.setFont(new Font("Arial", Font.PLAIN, 16));
             whitePanel.add(savedLabel);
             whitePanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
             JScrollPane scrollPane = new JScrollPane();
             JPanel namesPanel = new JPanel();
             namesPanel.setLayout(new BoxLayout(namesPanel, BoxLayout.Y_AXIS));
+            namesPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             for (String name : savedNames) {
                 JButton nameButton = new JButton(name);
                 nameButton.setMaximumSize(new Dimension(440, 40));
-                nameButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+                nameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                 nameButton.addActionListener(e -> {
                     soundManager.playClick();
                     game.startGame(name);
@@ -570,30 +633,48 @@ class NameSelectionPanel extends JPanel {
             whitePanel.add(Box.createRigidArea(new Dimension(0, 10)));
         }
 
+        JButton submitButton = new JButton("Start Playing");
+        submitButton.setFont(new Font("Arial", Font.BOLD, 20));
+        submitButton.setBackground(new Color(168, 85, 247));
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setMaximumSize(new Dimension(440, 50));
+        submitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        submitButton.addActionListener(e -> {
+            soundManager.playClick();
+            String name = nameField.getText().trim();
+            if (!name.isEmpty()) {
+                game.getGameData().addPlayerName(name);
+                game.startGame(name);
+            }
+        });
         whitePanel.add(submitButton);
 
-        JPanel wrapperPanel = new JPanel(new BorderLayout());
-        wrapperPanel.setOpaque(false);
-        wrapperPanel.add(Box.createHorizontalGlue(), BorderLayout.WEST);
-        wrapperPanel.add(whitePanel, BorderLayout.CENTER);
-        wrapperPanel.add(Box.createHorizontalGlue(), BorderLayout.EAST);
+        // Horizontal centering wrapper
+        JPanel horizontalWrapper = new JPanel(new BorderLayout());
+        horizontalWrapper.setOpaque(false);
+        horizontalWrapper.add(Box.createHorizontalGlue(), BorderLayout.WEST);
+        horizontalWrapper.add(whitePanel, BorderLayout.CENTER);
+        horizontalWrapper.add(Box.createHorizontalGlue(), BorderLayout.EAST);
 
-        centerPanel.add(Box.createVerticalGlue());
-        centerPanel.add(wrapperPanel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+        mainContainer.add(horizontalWrapper);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 40)));
 
-        JButton backButton = new JButton("??? Back to Menu");
+        // Back button
+        JButton backButton = new JButton("Back to Menu");
         backButton.setFont(new Font("Arial", Font.PLAIN, 16));
         backButton.setForeground(Color.WHITE);
         backButton.setContentAreaFilled(false);
         backButton.setBorderPainted(false);
         backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        backButton.addActionListener(e -> game.showPanel("menu"));
-        centerPanel.add(backButton);
+        backButton.addActionListener(e -> {
+            soundManager.playClick();
+            game.showPanel("menu");
+        });
+        mainContainer.add(backButton);
 
-        centerPanel.add(Box.createVerticalGlue());
+        mainContainer.add(Box.createVerticalGlue());
 
-        add(centerPanel, BorderLayout.CENTER);
+        add(mainContainer, BorderLayout.CENTER);
     }
 }
 
@@ -623,15 +704,17 @@ class SettingsPanel extends JPanel {
             soundManager.setSoundEnabled(sfxCheckBox.isSelected());
         });
 
+        whitePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         whitePanel.add(titleLabel);
         whitePanel.add(Box.createRigidArea(new Dimension(0, 40)));
+        sfxCheckBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         whitePanel.add(sfxCheckBox);
         whitePanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
         JButton doneButton = new JButton("Done");
         doneButton.setFont(new Font("Arial", Font.BOLD, 20));
         doneButton.setBackground(new Color(168, 85, 247));
-        doneButton.setForeground(Color.WHITE);
+        doneButton.setForeground(Color.BLACK);
         doneButton.setMaximumSize(new Dimension(200, 50));
         doneButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         doneButton.addActionListener(e -> {
@@ -689,7 +772,7 @@ class LeaderboardPanel extends JPanel {
                 updateTable();
             }
         });
-        
+
         JLabel levelLabel = new JLabel("Level:");
         levelLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         String[] levels = {"All Levels", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"};
@@ -729,7 +812,7 @@ class LeaderboardPanel extends JPanel {
         JButton backButton = new JButton("Back to Menu");
         backButton.setFont(new Font("Arial", Font.BOLD, 18));
         backButton.setBackground(new Color(168, 85, 247));
-        backButton.setForeground(Color.WHITE);
+        backButton.setForeground(Color.BLACK);
         backButton.addActionListener(e -> game.showPanel("menu"));
 
         whitePanel.add(titleLabel, BorderLayout.NORTH);
@@ -859,7 +942,7 @@ class GameBoardPanel extends JPanel {
 
         JLabel instructionLabel = new JLabel("Create four groups of four!", SwingConstants.CENTER);
         instructionLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        instructionLabel.setForeground(Color.GRAY);
+        instructionLabel.setForeground(Color.WHITE);
         instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         hintLabel = new JLabel(" ");
@@ -1030,9 +1113,9 @@ class GameBoardPanel extends JPanel {
             }
 
             if (maxMatch == 3) {
-                hintLabel.setText("???? One away! You're so close!");
+                hintLabel.setText("One away! You're so close!");
             } else if (maxMatch == 2) {
-                hintLabel.setText("???? Two away! Keep trying!");
+                hintLabel.setText("Two away! Keep trying!");
             } else {
                 hintLabel.setText(" ");
             }
@@ -1076,24 +1159,24 @@ class GameBoardPanel extends JPanel {
 
         if (levelCompleted) {
             if (timeTaken < 60) {
-                achievements.add("Speed Demon");
-                achievementScore += 500;
+                achievementScore += addAchievement(achievements, "Speed Demon", 500);
             }
             if (mistakes == 0) {
-                achievements.add("Perfect Game");
-                achievementScore += 1000;
+                achievementScore += addAchievement(achievements, "Perfect Game", 1000);
             }
-            achievements.add("Master Mind");
-            achievementScore += 750;
+            achievementScore += addAchievement(achievements, "Master Mind", 750);
             if (timeLeft >= 30) {
-                achievements.add("Time Lord");
-                achievementScore += 300;
+                achievementScore += addAchievement(achievements, "Time Lord", 300);
             }
         }
 
         int baseScore = solvedCategories.size() * 100;
         int timeBonus = Math.max(0, timeLeft * 10);
         int totalScore = baseScore + timeBonus + achievementScore - (mistakes * 50);
+
+        if (!levelCompleted && mistakes >= 4) {
+            totalScore = 0;
+        }
 
         // Only save score if level was completed successfully
         if (levelCompleted && totalScore > 0) {
@@ -1102,6 +1185,12 @@ class GameBoardPanel extends JPanel {
         }
 
         showGameCompleteDialog(totalScore, achievements, levelCompleted);
+    }
+
+    private int addAchievement(ArrayList<String> achievements, String name, int value) {
+        String sign = value >= 0 ? "+" : "";
+        achievements.add(name + " (" + sign + value + ")");
+        return value;
     }
 
     private void showGameCompleteDialog(int score, ArrayList<String> achievements, boolean levelCompleted) {
@@ -1140,7 +1229,7 @@ class GameBoardPanel extends JPanel {
             panel.add(achLabel);
 
             for (String ach : achievements) {
-                JLabel achItem = new JLabel("??? " + ach);
+                JLabel achItem = new JLabel("• " + ach);
                 achItem.setFont(new Font("Arial", Font.PLAIN, 16));
                 achItem.setAlignmentX(Component.CENTER_ALIGNMENT);
                 panel.add(achItem);
