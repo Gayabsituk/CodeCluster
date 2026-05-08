@@ -92,6 +92,8 @@ public class CodeCluster extends JFrame {
 
 class SoundManager {
     private boolean soundEnabled = true;
+    private Thread bgmThread;
+    private volatile boolean bgmPlaying = false;
 
     public void playClick() {
         if (!soundEnabled) return;
@@ -127,6 +129,78 @@ class SoundManager {
         playBeep(200, 300);
     }
 
+    // Start background music - loops continuously
+    public void playBackgroundMusic() {
+        if (!soundEnabled) return;
+        if (bgmPlaying) return;
+        
+        bgmPlaying = true;
+        bgmThread = new Thread(() -> {
+            while (bgmPlaying) {
+                try {
+                    // Play a simple melodic loop (8-bar progression)
+                    playBGMLoop();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }, "BGMThread");
+        bgmThread.setDaemon(true);
+        bgmThread.start();
+    }
+
+    // Play a melodic background music loop
+    private void playBGMLoop() {
+        int[] melody = {262, 330, 392, 440, 392, 330, 262, 196}; // C, E, G, A, G, E, C, B (all notes in C major)
+        int noteDuration = 400;
+        
+        for (int note : melody) {
+            if (!bgmPlaying) break;
+            playBeep(note, noteDuration);
+            try { Thread.sleep(50); } catch (InterruptedException e) {}
+        }
+    }
+
+    // Stop background music
+    public void stopBackgroundMusic() {
+        bgmPlaying = false;
+        if (bgmThread != null) {
+            try {
+                bgmThread.join(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Play win sound effect - ascending notes
+    public void playWinSound() {
+        if (!soundEnabled) return;
+        Thread soundThread = new Thread(() -> {
+            int[] winNotes = {523, 659, 784, 1047}; // C5, E5, G5, C6
+            for (int note : winNotes) {
+                playBeep(note, 150);
+                try { Thread.sleep(50); } catch (InterruptedException e) {}
+            }
+        }, "WinSoundThread");
+        soundThread.setDaemon(true);
+        soundThread.start();
+    }
+
+    // Play game over sound effect - descending notes
+    public void playGameOverSound() {
+        if (!soundEnabled) return;
+        Thread soundThread = new Thread(() -> {
+            int[] gameOverNotes = {523, 392, 330, 262, 196}; // C5, G4, E4, C4, B3
+            for (int note : gameOverNotes) {
+                playBeep(note, 200);
+                try { Thread.sleep(100); } catch (InterruptedException e) {}
+            }
+        }, "GameOverSoundThread");
+        soundThread.setDaemon(true);
+        soundThread.start();
+    }
+
     private void playBeep(int frequency, int duration) {
         try {
             float sampleRate = 44100f;
@@ -153,6 +227,9 @@ class SoundManager {
 
     public void setSoundEnabled(boolean enabled) {
         this.soundEnabled = enabled;
+        if (!enabled && bgmPlaying) {
+            stopBackgroundMusic();
+        }
     }
 
     public boolean isSoundEnabled() {
@@ -163,14 +240,14 @@ class SoundManager {
 class GameData {
     private LinkedList<String> playerNames;
     private TreeMap<String, ArrayList<Score>> scores;
-    private HashMap<Integer, ArrayList<ArrayList<Category>>> levelData;
+    private TreeMap<Integer, ArrayList<ArrayList<Category>>> levelData;
     private boolean sfxEnabled;
     private Stack<GameState> gameHistory;
 
     public GameData() {
         playerNames = new LinkedList<>();
         scores = new TreeMap<>();
-        levelData = new HashMap<>();
+        levelData = new TreeMap<>();
         sfxEnabled = true;
         gameHistory = new Stack<>();
         initializeLevelData();
@@ -180,93 +257,93 @@ class GameData {
         // Level 1 - 2 alternative sets of 4 categories
         ArrayList<ArrayList<Category>> level1Sets = new ArrayList<>();
         ArrayList<Category> level1a = new ArrayList<>();
-        level1a.add(new Category("Java Keywords", new String[]{"STATIC", "VOID", "CLASS", "PUBLIC"}));
-        level1a.add(new Category("Data Structures", new String[]{"ARRAY", "STACK", "QUEUE", "TREE"}));
-        level1a.add(new Category("Primitive Types", new String[]{"INT", "BOOLEAN", "CHAR", "DOUBLE"}));
-        level1a.add(new Category("Common Methods", new String[]{"GET", "SET", "PUSH", "POP"}));
+        level1a.add(new Category("Java Keywords", new String[]{"STATIC", "VOID", "CLASS", "PUBLIC"}, 1));
+        level1a.add(new Category("Data Structures", new String[]{"ARRAY", "STACK", "QUEUE", "TREE"}, 2));
+        level1a.add(new Category("Primitive Types", new String[]{"INT", "BOOLEAN", "CHAR", "DOUBLE"}, 1));
+        level1a.add(new Category("Common Methods", new String[]{"GET", "SET", "PUSH", "POP"}, 1));
         level1Sets.add(level1a);
 
         ArrayList<Category> level1b = new ArrayList<>();
-        level1b.add(new Category("Control Keywords", new String[]{"IF", "ELSE", "SWITCH", "CASE"}));
-        level1b.add(new Category("Collection Types", new String[]{"LIST", "SET", "MAP", "QUEUE"}));
-        level1b.add(new Category("Numeric Types", new String[]{"BYTE", "SHORT", "INT", "LONG"}));
-        level1b.add(new Category("Common Operators", new String[]{"PLUS", "MINUS", "MULTIPLY", "DIVIDE"}));
+        level1b.add(new Category("Control Keywords", new String[]{"IF", "ELSE", "SWITCH", "CASE"}, 1));
+        level1b.add(new Category("Collection Types", new String[]{"LIST", "SET", "MAP", "QUEUE"}, 2));
+        level1b.add(new Category("Numeric Types", new String[]{"BYTE", "SHORT", "INT", "LONG"}, 1));
+        level1b.add(new Category("Common Operators", new String[]{"PLUS", "MINUS", "MULTIPLY", "DIVIDE"}, 1));
         level1Sets.add(level1b);
         levelData.put(1, level1Sets);
 
         // Level 2 - 2 alternative sets of 4 categories
         ArrayList<ArrayList<Category>> level2Sets = new ArrayList<>();
         ArrayList<Category> level2a = new ArrayList<>();
-        level2a.add(new Category("OOP Concepts", new String[]{"POLYMORPHISM", "INHERITANCE", "ENCAPSULATION", "ABSTRACTION"}));
-        level2a.add(new Category("Loop Keywords", new String[]{"FOR", "WHILE", "DO", "FOREACH"}));
-        level2a.add(new Category("String Methods", new String[]{"LENGTH", "SUBSTRING", "CONCAT", "TRIM"}));
-        level2a.add(new Category("Boolean Operators", new String[]{"AND", "OR", "NOT", "XOR"}));
+        level2a.add(new Category("OOP Concepts", new String[]{"POLYMORPHISM", "INHERITANCE", "ENCAPSULATION", "ABSTRACTION"}, 3));
+        level2a.add(new Category("Loop Keywords", new String[]{"FOR", "WHILE", "DO", "FOREACH"}, 2));
+        level2a.add(new Category("String Methods", new String[]{"LENGTH", "SUBSTRING", "CONCAT", "TRIM"}, 2));
+        level2a.add(new Category("Boolean Operators", new String[]{"AND", "OR", "NOT", "XOR"}, 2));
         level2Sets.add(level2a);
 
         ArrayList<Category> level2b = new ArrayList<>();
-        level2b.add(new Category("Array Methods", new String[]{"SORT", "FILL", "COPY", "BINARYSEARCH"}));
-        level2b.add(new Category("Exception Types", new String[]{"IOEXCEPTION", "NULLPOINTER", "ARITHMETIC", "INDEXOUTOFBOUNDS"}));
-        level2b.add(new Category("Access Modifiers", new String[]{"PUBLIC", "PRIVATE", "PROTECTED", "DEFAULT"}));
-        level2b.add(new Category("Inheritance Keywords", new String[]{"EXTENDS", "IMPLEMENTS", "SUPER", "THIS"}));
+        level2b.add(new Category("Array Methods", new String[]{"SORT", "FILL", "COPY", "BINARYSEARCH"}, 3));
+        level2b.add(new Category("Exception Types", new String[]{"IOEXCEPTION", "NULLPOINTER", "ARITHMETIC", "INDEXOUTOFBOUNDS"}, 3));
+        level2b.add(new Category("Access Modifiers", new String[]{"PUBLIC", "PRIVATE", "PROTECTED", "DEFAULT"}, 2));
+        level2b.add(new Category("Inheritance Keywords", new String[]{"EXTENDS", "IMPLEMENTS", "SUPER", "THIS"}, 3));
         level2Sets.add(level2b);
         levelData.put(2, level2Sets);
 
         // Level 3 - 2 alternative sets of 5 categories
         ArrayList<ArrayList<Category>> level3Sets = new ArrayList<>();
         ArrayList<Category> level3a = new ArrayList<>();
-        level3a.add(new Category("Java Collections", new String[]{"LIST", "MAP", "SET", "HASHMAP"}));
-        level3a.add(new Category("Exception Handling", new String[]{"TRY", "CATCH", "THROW", "FINALLY"}));
-        level3a.add(new Category("Access Modifiers", new String[]{"PRIVATE", "PROTECTED", "PACKAGE", "DEFAULT"}));
-        level3a.add(new Category("Wrapper Classes", new String[]{"INTEGER", "LONG", "FLOAT", "CHARACTER"}));
-        level3a.add(new Category("Keywords", new String[]{"FINAL", "SUPER", "THIS", "EXTENDS"}));
+        level3a.add(new Category("Java Collections", new String[]{"LIST", "MAP", "SET", "HASHMAP"}, 3));
+        level3a.add(new Category("Exception Handling", new String[]{"TRY", "CATCH", "THROW", "FINALLY"}, 3));
+        level3a.add(new Category("Access Modifiers", new String[]{"PRIVATE", "PROTECTED", "PACKAGE", "DEFAULT"}, 2));
+        level3a.add(new Category("Wrapper Classes", new String[]{"INTEGER", "LONG", "FLOAT", "CHARACTER"}, 3));
+        level3a.add(new Category("Keywords", new String[]{"FINAL", "SUPER", "THIS", "EXTENDS"}, 3));
         level3Sets.add(level3a);
 
         ArrayList<Category> level3b = new ArrayList<>();
-        level3b.add(new Category("Stream Methods", new String[]{"FILTER", "MAP", "COLLECT", "FOR_EACH"}));
-        level3b.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "TERMINATED"}));
-        level3b.add(new Category("Numeric Wrappers", new String[]{"DOUBLE", "FLOAT", "INTEGER", "LONG"}));
-        level3b.add(new Category("String Builders", new String[]{"APPEND", "INSERT", "DELETE", "TOSTRING"}));
-        level3b.add(new Category("Concurrency", new String[]{"SYNCHRONIZED", "VOLATILE", "LOCK", "ATOMIC"}));
+        level3b.add(new Category("Stream Methods", new String[]{"FILTER", "MAP", "COLLECT", "FOR_EACH"}, 4));
+        level3b.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "TERMINATED"}, 4));
+        level3b.add(new Category("Numeric Wrappers", new String[]{"DOUBLE", "FLOAT", "INTEGER", "LONG"}, 2));
+        level3b.add(new Category("String Builders", new String[]{"APPEND", "INSERT", "DELETE", "TOSTRING"}, 3));
+        level3b.add(new Category("Concurrency", new String[]{"SYNCHRONIZED", "VOLATILE", "LOCK", "ATOMIC"}, 4));
         level3Sets.add(level3b);
         levelData.put(3, level3Sets);
 
         // Level 4 - 2 alternative sets of 5 categories
         ArrayList<ArrayList<Category>> level4Sets = new ArrayList<>();
         ArrayList<Category> level4a = new ArrayList<>();
-        level4a.add(new Category("Design Patterns", new String[]{"SINGLETON", "FACTORY", "OBSERVER", "DECORATOR"}));
-        level4a.add(new Category("Testing Terms", new String[]{"JUNIT", "MOCK", "ASSERT", "TEST"}));
-        level4a.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "WAITING"}));
-        level4a.add(new Category("Memory Areas", new String[]{"HEAP", "STACK", "METASPACE", "POOL"}));
-        level4a.add(new Category("Synchronization", new String[]{"LOCK", "SYNCHRONIZED", "VOLATILE", "ATOMIC"}));
+        level4a.add(new Category("Design Patterns", new String[]{"SINGLETON", "FACTORY", "OBSERVER", "DECORATOR"}, 4));
+        level4a.add(new Category("Testing Terms", new String[]{"JUNIT", "MOCK", "ASSERT", "TEST"}, 4));
+        level4a.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "WAITING"}, 4));
+        level4a.add(new Category("Memory Areas", new String[]{"HEAP", "STACK", "METASPACE", "POOL"}, 4));
+        level4a.add(new Category("Synchronization", new String[]{"LOCK", "SYNCHRONIZED", "VOLATILE", "ATOMIC"}, 4));
         level4Sets.add(level4a);
 
         ArrayList<Category> level4b = new ArrayList<>();
-        level4b.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}));
-        level4b.add(new Category("Web Concepts", new String[]{"HTTP", "HTTPS", "REST", "SOAP"}));
-        level4b.add(new Category("Database Terms", new String[]{"SQL", "INDEX", "JOIN", "TRANSACTION"}));
-        level4b.add(new Category("Caching", new String[]{"MEMCACHED", "REDIS", "GUAVA", "CACHE"}));
-        level4b.add(new Category("Testing Frameworks", new String[]{"TESTNG", "SPOCK", "CUCUMBER", "MOCKITO"}));
+        level4b.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}, 4));
+        level4b.add(new Category("Web Concepts", new String[]{"HTTP", "HTTPS", "REST", "SOAP"}, 4));
+        level4b.add(new Category("Database Terms", new String[]{"SQL", "INDEX", "JOIN", "TRANSACTION"}, 4));
+        level4b.add(new Category("Caching", new String[]{"MEMCACHED", "REDIS", "GUAVA", "CACHE"}, 4));
+        level4b.add(new Category("Testing Frameworks", new String[]{"TESTNG", "SPOCK", "CUCUMBER", "MOCKITO"}, 4));
         level4Sets.add(level4b);
         levelData.put(4, level4Sets);
 
         // Level 5 - 2 alternative sets of 6 categories
         ArrayList<ArrayList<Category>> level5Sets = new ArrayList<>();
         ArrayList<Category> level5a = new ArrayList<>();
-        level5a.add(new Category("Spring Framework", new String[]{"BEAN", "AUTOWIRED", "COMPONENT", "SERVICE"}));
-        level5a.add(new Category("SQL Keywords", new String[]{"SELECT", "INSERT", "UPDATE", "DELETE"}));
-        level5a.add(new Category("Git Commands", new String[]{"COMMIT", "PUSH", "PULL", "MERGE"}));
-        level5a.add(new Category("HTTP Methods", new String[]{"GET", "POST", "PUT", "PATCH"}));
-        level5a.add(new Category("JSON Operations", new String[]{"PARSE", "STRINGIFY", "SERIALIZE", "DESERIALIZE"}));
-        level5a.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}));
+        level5a.add(new Category("Spring Framework", new String[]{"BEAN", "AUTOWIRED", "COMPONENT", "SERVICE"}, 4));
+        level5a.add(new Category("SQL Keywords", new String[]{"SELECT", "INSERT", "UPDATE", "DELETE"}, 4));
+        level5a.add(new Category("Git Commands", new String[]{"COMMIT", "PUSH", "PULL", "MERGE"}, 3));
+        level5a.add(new Category("HTTP Methods", new String[]{"GET", "POST", "PUT", "PATCH"}, 3));
+        level5a.add(new Category("JSON Operations", new String[]{"PARSE", "STRINGIFY", "SERIALIZE", "DESERIALIZE"}, 3));
+        level5a.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}, 4));
         level5Sets.add(level5a);
 
         ArrayList<Category> level5b = new ArrayList<>();
-        level5b.add(new Category("Cloud Platforms", new String[]{"AZURE", "AWS", "GCP", "HEROKU"}));
-        level5b.add(new Category("CI/CD", new String[]{"JENKINS", "GITHUB", "GITLAB", "AZUREDEVOPS"}));
-        level5b.add(new Category("Container Tools", new String[]{"DOCKER", "KUBERNETES", "PODMAN", "SWARM"}));
-        level5b.add(new Category("API Methods", new String[]{"GET", "POST", "DELETE", "PATCH"}));
-        level5b.add(new Category("Data Formats", new String[]{"JSON", "XML", "YAML", "CSV"}));
-        level5b.add(new Category("Security", new String[]{"OAUTH", "JWT", "SSL", "TLS"}));
+        level5b.add(new Category("Cloud Platforms", new String[]{"AZURE", "AWS", "GCP", "HEROKU"}, 4));
+        level5b.add(new Category("CI/CD", new String[]{"JENKINS", "GITHUB", "GITLAB", "AZUREDEVOPS"}, 4));
+        level5b.add(new Category("Container Tools", new String[]{"DOCKER", "KUBERNETES", "PODMAN", "SWARM"}, 4));
+        level5b.add(new Category("API Methods", new String[]{"GET", "POST", "DELETE", "PATCH"}, 3));
+        level5b.add(new Category("Data Formats", new String[]{"JSON", "XML", "YAML", "CSV"}, 3));
+        level5b.add(new Category("Security", new String[]{"OAUTH", "JWT", "SSL", "TLS"}, 4));
         level5Sets.add(level5b);
         levelData.put(5, level5Sets);
     }
@@ -388,10 +465,12 @@ class GameData {
 class Category implements Serializable {
     private String name;
     private String[] words;
+    private int difficulty; // 1=Yellow (easy), 2=Green, 3=Blue, 4=Purple (hard)
 
-    public Category(String name, String[] words) {
+    public Category(String name, String[] words, int difficulty) {
         this.name = name;
         this.words = words;
+        this.difficulty = difficulty;
     }
 
     public String getName() {
@@ -400,6 +479,10 @@ class Category implements Serializable {
 
     public String[] getWords() {
         return words;
+    }
+
+    public int getDifficulty() {
+        return difficulty;
     }
 
     public boolean matches(List<String> selectedWords) {
@@ -416,6 +499,21 @@ class Category implements Serializable {
             if (selectedWords.contains(word)) count++;
         }
         return count;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Category category = (Category) obj;
+        return difficulty == category.difficulty && 
+               name.equals(category.name) && 
+               java.util.Arrays.equals(words, category.words);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(name, difficulty, java.util.Arrays.hashCode(words));
     }
 }
 
@@ -463,60 +561,86 @@ class GameState implements Serializable {
 class MainMenuPanel extends JPanel {
     public MainMenuPanel(CodeCluster game, SoundManager soundManager) {
         setLayout(new BorderLayout());
-        setBackground(new Color(99, 102, 241));
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setOpaque(false);
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 30, 100));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(60, 100, 40, 100));
 
-        JLabel titleLabel = new JLabel("CODE CLUSTER");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 72));
-        titleLabel.setForeground(Color.WHITE);
+        JLabel titleLabel;
+        try {
+            ImageIcon icon = new ImageIcon("title.png");
+            Image img = icon.getImage();
+
+            java.awt.image.ImageFilter filter = new java.awt.image.RGBImageFilter() {
+                @Override
+                public final int filterRGB(int x, int y, int rgb) {
+                    int r = (rgb >> 16) & 0xFF;
+                    int g = (rgb >> 8) & 0xFF;
+                    int b = rgb & 0xFF;
+                    
+                    if (r >= 254 && g >= 254 && b >= 254) {
+                        return 0x00FFFFFF & rgb; // Fully transparent
+                    }
+                    return rgb;
+                }
+            };
+
+            java.awt.image.ImageProducer ip = new java.awt.image.FilteredImageSource(img.getSource(), filter);
+            img = java.awt.Toolkit.getDefaultToolkit().createImage(ip);
+
+            if (icon.getIconWidth() > 800) {
+                img = img.getScaledInstance(800, -1, Image.SCALE_SMOOTH);
+            }
+            titleLabel = new JLabel(new ImageIcon(img));
+        } catch (Exception e) {
+            titleLabel = new JLabel("CODE CLUSTER");
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 85));
+            titleLabel.setForeground(Color.WHITE);
+        }
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel subtitleLabel = new JLabel("Find 4 words that share a category!");
-        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 24));
+        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 26));
         subtitleLabel.setForeground(Color.WHITE);
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(titleLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         centerPanel.add(subtitleLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 80)));
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 60)));
 
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
         buttonsPanel.setOpaque(false);
-        buttonsPanel.setMaximumSize(new Dimension(400, 400));
         buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JButton startButton = createMenuButton("Start Game", new Color(34, 197, 94));
+        JButton startButton = new GlowingButton("Start Game", new Color(34, 197, 94)); // Green
         startButton.addActionListener(e -> {
             soundManager.playClick();
             game.showPanel("nameSelection");
         });
         buttonsPanel.add(startButton);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        JButton settingsButton = createMenuButton("Settings", new Color(59, 130, 246));
+        JButton settingsButton = new GlowingButton("Settings", new Color(14, 165, 233)); // Blue
         settingsButton.addActionListener(e -> {
             soundManager.playClick();
             game.showPanel("settings");
         });
         buttonsPanel.add(settingsButton);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        JButton leaderboardButton = createMenuButton("Leaderboard", new Color(249, 115, 22));
+        JButton leaderboardButton = new GlowingButton("Leaderboard", new Color(249, 115, 22)); // Orange
         leaderboardButton.addActionListener(e -> {
             soundManager.playClick();
             game.showPanel("leaderboard");
         });
         buttonsPanel.add(leaderboardButton);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 25)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        JButton exitButton = createMenuButton("Exit", new Color(239, 68, 68));
+        JButton exitButton = new GlowingButton("Exit", new Color(239, 68, 68)); // Red
         exitButton.addActionListener(e -> {
             soundManager.playClick();
             System.exit(0);
@@ -529,115 +653,346 @@ class MainMenuPanel extends JPanel {
         add(centerPanel, BorderLayout.CENTER);
     }
 
-    private JButton createMenuButton(String text, Color bg) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 24));
-        button.setBackground(bg);
-        button.setForeground(Color.BLACK);
-        button.setFocusable(false);
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        button.setPreferredSize(new Dimension(400, 70));
-        button.setMinimumSize(new Dimension(400, 70));
-        button.setMaximumSize(new Dimension(400, 70));
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth();
+        int h = getHeight();
+
+        Color centerColor = new Color(30, 58, 138); // lighter navy
+        Color edgeColor = new Color(15, 23, 42); // very dark navy
+        
+        java.awt.geom.Point2D center = new java.awt.geom.Point2D.Float(w / 2f, h / 2f);
+        float radius = (float) Math.max(w, h);
+        float[] dist = {0.0f, 1.0f};
+        Color[] colors = {centerColor, edgeColor};
+        RadialGradientPaint p = new RadialGradientPaint(center, radius, dist, colors);
+        
+        g2.setPaint(p);
+        g2.fillRect(0, 0, w, h);
+        g2.dispose();
+    }
+}
+
+class GlowingButton extends JButton {
+    private Color glowColor;
+    private boolean solidPill;
+    private boolean hoverGreen = false;
+
+    public void setHoverGreen(boolean hoverGreen) {
+        this.hoverGreen = hoverGreen;
+    }
+
+    public void setGlowColor(Color glowColor) {
+        this.glowColor = glowColor;
+        repaint();
+    }
+
+    public GlowingButton(String text, Color glowColor) {
+        this(text, glowColor, true);
+    }
+
+    public GlowingButton(String text, Color glowColor, boolean solidPill) {
+        super(text);
+        this.glowColor = glowColor;
+        this.solidPill = solidPill;
+        setContentAreaFilled(false);
+        setFocusPainted(false);
+        setBorderPainted(false);
+        setForeground(new Color(15, 23, 42)); 
+        setFont(new Font("Arial", Font.BOLD, 24));
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+        setPreferredSize(new Dimension(400, 65));
+        setMinimumSize(new Dimension(400, 65));
+        setMaximumSize(new Dimension(400, 65));
+        setAlignmentX(Component.CENTER_ALIGNMENT);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int width = getWidth();
+        int height = getHeight();
+
+        Color baseGlow = getModel().isRollover() && isEnabled() ? glowColor.brighter() : glowColor;
+
+        if (!solidPill) {
+            java.awt.geom.Area outer = new java.awt.geom.Area(new Rectangle(0, 0, width, height));
+            java.awt.geom.Area inner = new java.awt.geom.Area(new java.awt.geom.RoundRectangle2D.Float(8, 8, width - 16, height - 16, height - 16, height - 16));
+            outer.subtract(inner);
+            g2.setClip(outer);
+        }
+
+        // outer soft glow layers
+        for (int i = 0; i < 4; i++) {
+            g2.setColor(new Color(baseGlow.getRed(), baseGlow.getGreen(), baseGlow.getBlue(), 40 - i * 10));
+            g2.fillRoundRect(i * 2, i * 2, width - i * 4, height - i * 4, height, height);
+        }
+
+        if (!solidPill) {
+            g2.setClip(null); 
+        }
+
+        // inner pill & border
+        GradientPaint gp;
+        if (solidPill) {
+            // solid filled border
+            g2.setColor(baseGlow);
+            g2.fillRoundRect(6, 6, width - 12, height - 12, height - 12, height - 12);
+
+            if (getModel().isArmed()) {
+                 gp = new GradientPaint(0, 9, new Color(220, 220, 225), 0, height - 9, new Color(190, 190, 200));
+            } else if (getModel().isRollover() && hoverGreen) {
+                 gp = new GradientPaint(0, 9, new Color(134, 239, 172), 0, height - 9, new Color(34, 197, 94));
+            } else {
+                 gp = new GradientPaint(0, 9, Color.WHITE, 0, height - 9, new Color(210, 215, 225));
+            }
+            g2.setPaint(gp);
+            g2.fillRoundRect(9, 9, width - 18, height - 18, height - 18, height - 18);
+        } else {
+            // 1. fill the inner background slightly to give it substance
+            g2.setColor(new Color(0, 0, 0, 40)); 
+            g2.fillRoundRect(8, 8, width - 16, height - 16, height - 16, height - 16);
+
+            // 2. main translucent glass gradient
+            if (getModel().isArmed()) {
+                gp = new GradientPaint(0, 8, new Color(255, 255, 255, 10), 0, height - 8, new Color(255, 255, 255, 80));
+            } else {
+                gp = new GradientPaint(0, 8, new Color(255, 255, 255, 5), 0, height - 8, new Color(255, 255, 255, 120));
+            }
+            g2.setPaint(gp);
+            g2.fillRoundRect(8, 8, width - 16, height - 16, height - 16, height - 16);
+
+            // 3. sharp inner bottom highlight to give 3D bevel effect
+            GradientPaint highlightStroke = new GradientPaint(
+                0, height / 2, new Color(255, 255, 255, 0),
+                0, height - 8, new Color(255, 255, 255, 200)
+            );
+            g2.setPaint(highlightStroke);
+            g2.setStroke(new BasicStroke(2f));
+            g2.drawRoundRect(9, 9, width - 18, height - 18, height - 18, height - 18);
+
+            // 4. colored neon border
+            g2.setColor(baseGlow);
+            g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.drawRoundRect(8, 8, width - 16, height - 16, height - 16, height - 16);
+        }
+
+        FontMetrics fm = g2.getFontMetrics();
+        int textWidth = fm.stringWidth(getText());
+        int textX = (width - textWidth) / 2;
+        int textY = (height - fm.getHeight()) / 2 + fm.getAscent();
+        
+        if ("New Profile".equals(getText())) {
+            int iconSize = 24;
+            int iconX = 30; 
+            int iconY = (height - iconSize) / 2;
+            g2.setColor(new Color(120, 120, 120));
+            g2.fillOval(iconX + 6, iconY + 2, 12, 12);
+            g2.fillArc(iconX + 2, iconY + 14, 20, 20, 0, 180);
+        }
+
+        g2.setColor(getForeground());
+        g2.drawString(getText(), textX, textY);
+
+        g2.dispose();
     }
 }
 
 
 
+class GlowingTextField extends JTextField {
+    private Color glowColor;
+
+    public GlowingTextField(Color glowColor) {
+        super();
+        this.glowColor = glowColor;
+        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
+        setFont(new Font("Arial", Font.BOLD, 24));
+        setForeground(Color.BLACK);
+        setCaretColor(Color.BLACK);
+        setHorizontalAlignment(JTextField.CENTER);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int width = getWidth();
+        int height = getHeight();
+
+        for (int i = 0; i < 4; i++) {
+            g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), 40 - i * 10));
+            g2.fillRoundRect(i * 2, i * 2, width - i * 4, height - i * 4, height, height);
+        }
+
+        g2.setColor(glowColor);
+        g2.fillRoundRect(6, 6, width - 12, height - 12, height - 12, height - 12);
+
+        g2.setColor(Color.WHITE);
+        g2.fillRoundRect(9, 9, width - 18, height - 18, height - 18, height - 18);
+
+        g2.dispose();
+        super.paintComponent(g);
+    }
+}
+
+class DarkRoundedPanel extends JPanel {
+    public DarkRoundedPanel() {
+        setOpaque(false);
+    }
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(new Color(0, 0, 0, 80)); 
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30);
+        g2.dispose();
+        super.paintComponent(g);
+    }
+}
+
 class NameSelectionPanel extends JPanel {
     public NameSelectionPanel(CodeCluster game, SoundManager soundManager) {
         setLayout(new BorderLayout());
-        setBackground(new Color(99, 102, 241));
 
-        // Main container with vertical centering
         JPanel mainContainer = new JPanel();
         mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
         mainContainer.setOpaque(false);
+        mainContainer.setBorder(BorderFactory.createEmptyBorder(30, 50, 20, 50));
 
-        // Title section
-        JPanel titlePanel = new JPanel();
-        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
-        titlePanel.setOpaque(false);
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
+        JLabel titleLabel;
+        try {
+            ImageIcon icon = new ImageIcon("welcome.png");
+            Image img = icon.getImage();
 
-        JLabel titleLabel = new JLabel("Welcome Player!");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 48));
-        titleLabel.setForeground(Color.WHITE);
+            java.awt.image.ImageFilter filter = new java.awt.image.RGBImageFilter() {
+                @Override
+                public final int filterRGB(int x, int y, int rgb) {
+                    int r = (rgb >> 16) & 0xFF;
+                    int g = (rgb >> 8) & 0xFF;
+                    int b = rgb & 0xFF;
+                    
+                    if (r >= 254 && g >= 254 && b >= 254) {
+                        return 0x00FFFFFF & rgb;
+                    }
+                    return rgb;
+                }
+            };
+
+            java.awt.image.ImageProducer ip = new java.awt.image.FilteredImageSource(img.getSource(), filter);
+            img = java.awt.Toolkit.getDefaultToolkit().createImage(ip);
+
+            if (icon.getIconWidth() > 800) {
+                img = img.getScaledInstance(800, -1, Image.SCALE_SMOOTH);
+            }
+            titleLabel = new JLabel(new ImageIcon(img));
+        } catch (Exception e) {
+            titleLabel = new JLabel("WELCOME PLAYER!");
+            titleLabel.setFont(new Font("Arial", Font.BOLD, 75));
+            titleLabel.setForeground(Color.WHITE);
+        }
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel subtitleLabel = new JLabel("Choose your name to continue");
-        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+        subtitleLabel.setFont(new Font("Arial", Font.PLAIN, 24));
         subtitleLabel.setForeground(Color.WHITE);
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        titlePanel.add(titleLabel);
-        titlePanel.add(Box.createRigidArea(new Dimension(0, 15)));
-        titlePanel.add(subtitleLabel);
+        mainContainer.add(titleLabel);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 10)));
+        mainContainer.add(subtitleLabel);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 30)));
 
-        mainContainer.add(Box.createVerticalGlue());
-        mainContainer.add(titlePanel);
-        mainContainer.add(Box.createRigidArea(new Dimension(0, 50)));
-
-        // White panel with input fields - horizontally centered
-        JPanel whitePanel = new JPanel();
-        whitePanel.setLayout(new BoxLayout(whitePanel, BoxLayout.Y_AXIS));
-        whitePanel.setBackground(Color.WHITE);
-        whitePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        whitePanel.setMaximumSize(new Dimension(500, 400));
-
+        // input section
         JLabel enterLabel = new JLabel("Enter your name:");
-        enterLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        whitePanel.add(enterLabel);
-        whitePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        enterLabel.setFont(new Font("Arial", Font.BOLD, 22));
+        enterLabel.setForeground(Color.WHITE);
+        enterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainContainer.add(enterLabel);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        JTextField nameField = new JTextField();
-        nameField.setFont(new Font("Arial", Font.PLAIN, 20));
-        nameField.setMaximumSize(new Dimension(440, 50));
-        whitePanel.add(nameField);
-        whitePanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        GlowingTextField nameField = new GlowingTextField(new Color(168, 85, 247)); // Purple glow
+        nameField.setMaximumSize(new Dimension(500, 60));
+        nameField.setPreferredSize(new Dimension(500, 60));
+        mainContainer.add(nameField);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Show saved names
+        // show saved names
         LinkedList<String> savedNames = game.getGameData().getPlayerNames();
         if (!savedNames.isEmpty()) {
+            JSeparator sep = new JSeparator(SwingConstants.HORIZONTAL);
+            sep.setMaximumSize(new Dimension(600, 1));
+            sep.setForeground(new Color(255, 255, 255, 100));
+            sep.setBackground(new Color(255, 255, 255, 100));
+            mainContainer.add(sep);
+            mainContainer.add(Box.createRigidArea(new Dimension(0, 15)));
+
             JLabel savedLabel = new JLabel("Or select a saved name:");
-            savedLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-            whitePanel.add(savedLabel);
-            whitePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            savedLabel.setFont(new Font("Arial", Font.BOLD, 22));
+            savedLabel.setForeground(Color.WHITE);
+            savedLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            mainContainer.add(savedLabel);
+            mainContainer.add(Box.createRigidArea(new Dimension(0, 10)));
+
+            DarkRoundedPanel darkPanel = new DarkRoundedPanel();
+            darkPanel.setLayout(new BoxLayout(darkPanel, BoxLayout.Y_AXIS));
+            darkPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            darkPanel.setMaximumSize(new Dimension(540, 250));
 
             JScrollPane scrollPane = new JScrollPane();
+            scrollPane.setOpaque(false);
+            scrollPane.getViewport().setOpaque(false);
+            scrollPane.setBorder(BorderFactory.createEmptyBorder());
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
             JPanel namesPanel = new JPanel();
             namesPanel.setLayout(new BoxLayout(namesPanel, BoxLayout.Y_AXIS));
+            namesPanel.setOpaque(false);
             namesPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             for (String name : savedNames) {
-                JButton nameButton = new JButton(name);
-                nameButton.setMaximumSize(new Dimension(440, 40));
+                JButton nameButton = new GlowingButton(name, new Color(249, 115, 22)); // orange
+                nameButton.setMaximumSize(new Dimension(460, 50));
+                nameButton.setPreferredSize(new Dimension(460, 50));
+                nameButton.setFont(new Font("Arial", Font.BOLD, 20));
                 nameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
                 nameButton.addActionListener(e -> {
                     soundManager.playClick();
                     game.startGame(name);
                 });
                 namesPanel.add(nameButton);
-                namesPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+                namesPanel.add(Box.createRigidArea(new Dimension(0, 10)));
             }
 
+            JButton newProfileBtn = new GlowingButton("New Profile", new Color(150, 150, 150)); // gray glow
+            newProfileBtn.setMaximumSize(new Dimension(460, 50));
+            newProfileBtn.setPreferredSize(new Dimension(460, 50));
+            newProfileBtn.setFont(new Font("Arial", Font.BOLD, 20));
+            newProfileBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            newProfileBtn.addActionListener(e -> {
+                soundManager.playClick();
+                nameField.requestFocusInWindow();
+            });
+            namesPanel.add(newProfileBtn);
+
             scrollPane.setViewportView(namesPanel);
-            scrollPane.setMaximumSize(new Dimension(440, 150));
-            whitePanel.add(scrollPane);
-            whitePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            darkPanel.add(scrollPane);
+
+            mainContainer.add(darkPanel);
+            mainContainer.add(Box.createRigidArea(new Dimension(0, 20)));
         }
 
-        JButton submitButton = new JButton("Start Playing");
-        submitButton.setFont(new Font("Arial", Font.BOLD, 20));
-        submitButton.setBackground(new Color(168, 85, 247));
-        submitButton.setForeground(Color.WHITE);
-        submitButton.setMaximumSize(new Dimension(440, 50));
+        JButton submitButton = new GlowingButton("Start Playing", new Color(168, 85, 247)); // purple
+        submitButton.setMaximumSize(new Dimension(500, 60));
+        submitButton.setPreferredSize(new Dimension(500, 60));
         submitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         submitButton.addActionListener(e -> {
             soundManager.playClick();
@@ -647,24 +1002,15 @@ class NameSelectionPanel extends JPanel {
                 game.startGame(name);
             }
         });
-        whitePanel.add(submitButton);
+        mainContainer.add(submitButton);
+        mainContainer.add(Box.createVerticalGlue());
 
-        // Horizontal centering wrapper
-        JPanel horizontalWrapper = new JPanel(new BorderLayout());
-        horizontalWrapper.setOpaque(false);
-        horizontalWrapper.add(Box.createHorizontalGlue(), BorderLayout.WEST);
-        horizontalWrapper.add(whitePanel, BorderLayout.CENTER);
-        horizontalWrapper.add(Box.createHorizontalGlue(), BorderLayout.EAST);
-
-        mainContainer.add(horizontalWrapper);
-        mainContainer.add(Box.createRigidArea(new Dimension(0, 40)));
-
-        // Back button
-        JButton backButton = new JButton("Back to Menu");
-        backButton.setFont(new Font("Arial", Font.PLAIN, 16));
+        // back button
+        GlowingButton backButton = new GlowingButton("Back to Menu", new Color(150, 150, 150), false);
+        backButton.setPreferredSize(new Dimension(200, 50));
+        backButton.setMaximumSize(new Dimension(200, 50));
+        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         backButton.setForeground(Color.WHITE);
-        backButton.setContentAreaFilled(false);
-        backButton.setBorderPainted(false);
         backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         backButton.addActionListener(e -> {
             soundManager.playClick();
@@ -672,63 +1018,108 @@ class NameSelectionPanel extends JPanel {
         });
         mainContainer.add(backButton);
 
-        mainContainer.add(Box.createVerticalGlue());
-
         add(mainContainer, BorderLayout.CENTER);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth();
+        int h = getHeight();
+
+        // dark blue radial gradient
+        Color centerColor = new Color(30, 58, 138); 
+        Color edgeColor = new Color(15, 23, 42); 
+        
+        java.awt.geom.Point2D center = new java.awt.geom.Point2D.Float(w / 2f, h / 2f);
+        float radius = (float) Math.max(w, h);
+        float[] dist = {0.0f, 1.0f};
+        Color[] colors = {centerColor, edgeColor};
+        RadialGradientPaint p = new RadialGradientPaint(center, radius, dist, colors);
+        
+        g2.setPaint(p);
+        g2.fillRect(0, 0, w, h);
+        g2.dispose();
     }
 }
 
 class SettingsPanel extends JPanel {
     public SettingsPanel(CodeCluster game, SoundManager soundManager) {
         setLayout(new BorderLayout());
-        setBackground(new Color(99, 102, 241));
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setOpaque(false);
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(100, 200, 100, 200));
 
-        JPanel whitePanel = new JPanel();
-        whitePanel.setLayout(new BoxLayout(whitePanel, BoxLayout.Y_AXIS));
-        whitePanel.setBackground(Color.WHITE);
-        whitePanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
+        DarkRoundedPanel darkPanel = new DarkRoundedPanel();
+        darkPanel.setLayout(new BoxLayout(darkPanel, BoxLayout.Y_AXIS));
+        darkPanel.setBorder(BorderFactory.createEmptyBorder(60, 80, 60, 80));
 
         JLabel titleLabel = new JLabel("Settings");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 42));
+        titleLabel.setForeground(Color.WHITE);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JCheckBox sfxCheckBox = new JCheckBox("Sound Effects", game.getGameData().isSfxEnabled());
-        sfxCheckBox.setFont(new Font("Arial", Font.PLAIN, 20));
-        sfxCheckBox.addActionListener(e -> {
-            game.getGameData().setSfxEnabled(sfxCheckBox.isSelected());
-            soundManager.setSoundEnabled(sfxCheckBox.isSelected());
+        boolean initialSfx = game.getGameData().isSfxEnabled();
+        Color sfxColor = initialSfx ? new Color(34, 197, 94) : new Color(239, 68, 68);
+        String sfxText = initialSfx ? "Sound: ON" : "Sound: OFF";
+        
+        GlowingButton sfxToggle = new GlowingButton(sfxText, sfxColor, true);
+        sfxToggle.setForeground(new Color(15, 23, 42)); 
+        sfxToggle.addActionListener(e -> {
+            boolean currentSfx = game.getGameData().isSfxEnabled();
+            boolean newSfx = !currentSfx;
+            game.getGameData().setSfxEnabled(newSfx);
+            soundManager.setSoundEnabled(newSfx);
+            if (newSfx) soundManager.playClick();
+            
+            sfxToggle.setText(newSfx ? "Sound: ON" : "Sound: OFF");
+            sfxToggle.setGlowColor(newSfx ? new Color(34, 197, 94) : new Color(239, 68, 68));
         });
 
-        whitePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        whitePanel.add(titleLabel);
-        whitePanel.add(Box.createRigidArea(new Dimension(0, 40)));
-        sfxCheckBox.setAlignmentX(Component.CENTER_ALIGNMENT);
-        whitePanel.add(sfxCheckBox);
-        whitePanel.add(Box.createRigidArea(new Dimension(0, 40)));
-
-        JButton doneButton = new JButton("Done");
-        doneButton.setFont(new Font("Arial", Font.BOLD, 20));
-        doneButton.setBackground(new Color(168, 85, 247));
-        doneButton.setForeground(Color.BLACK);
-        doneButton.setMaximumSize(new Dimension(200, 50));
-        doneButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        GlowingButton doneButton = new GlowingButton("Done", new Color(150, 150, 150), false);
+        doneButton.setForeground(Color.WHITE);
         doneButton.addActionListener(e -> {
             soundManager.playClick();
             game.showPanel("menu");
         });
 
-        whitePanel.add(doneButton);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        sfxToggle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        doneButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        centerPanel.add(Box.createVerticalGlue());
-        centerPanel.add(whitePanel);
-        centerPanel.add(Box.createVerticalGlue());
+        darkPanel.add(titleLabel);
+        darkPanel.add(Box.createRigidArea(new Dimension(0, 50)));
+        darkPanel.add(sfxToggle);
+        darkPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+        darkPanel.add(doneButton);
+
+        centerPanel.add(darkPanel);
 
         add(centerPanel, BorderLayout.CENTER);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth();
+        int h = getHeight();
+
+        Color centerColor = new Color(30, 58, 138); 
+        Color edgeColor = new Color(15, 23, 42); 
+        
+        java.awt.geom.Point2D center = new java.awt.geom.Point2D.Float(w / 2f, h / 2f);
+        float radius = (float) Math.max(w, h);
+        float[] dist = {0.0f, 1.0f};
+        Color[] colors = {centerColor, edgeColor};
+        java.awt.RadialGradientPaint p = new java.awt.RadialGradientPaint(center, radius, dist, colors);
+        
+        g2.setPaint(p);
+        g2.fillRect(0, 0, w, h);
+        g2.dispose();
     }
 }
 
@@ -745,28 +1136,32 @@ class LeaderboardPanel extends JPanel {
         this.game = game;
         this.soundManager = soundManager;
         setLayout(new BorderLayout());
-        setBackground(new Color(99, 102, 241));
 
         JPanel wrapperPanel = new JPanel(new BorderLayout());
         wrapperPanel.setOpaque(false);
-        wrapperPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        wrapperPanel.setBorder(BorderFactory.createEmptyBorder(30, 80, 30, 80));
 
-        JPanel whitePanel = new JPanel(new BorderLayout());
-        whitePanel.setBackground(Color.WHITE);
-        whitePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Title
+        // title
         JLabel titleLabel = new JLabel("Leaderboard", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 42));
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
-        // Control Panel
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        controlPanel.setBackground(Color.WHITE);
+        // control panel
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        controlPanel.setOpaque(false);
 
-        JLabel searchLabel = new JLabel("Search Player:");
-        searchLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        searchField = new JTextField(15);
-        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
+        JLabel searchLabel = new JLabel("Search:");
+        searchLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        searchLabel.setForeground(Color.WHITE);
+        searchField = new JTextField(12);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        searchField.setBackground(new Color(15, 23, 42));
+        searchField.setForeground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(56, 189, 248), 1, true),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
         searchField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent e) {
                 updateTable();
@@ -774,17 +1169,46 @@ class LeaderboardPanel extends JPanel {
         });
 
         JLabel levelLabel = new JLabel("Level:");
-        levelLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        String[] levels = {"All Levels", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"};
+        levelLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        levelLabel.setForeground(Color.WHITE);
+        String[] levels = {"All", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"};
+        
+        javax.swing.ListCellRenderer<? super String> darkRenderer = new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                c.setBackground(isSelected ? new Color(56, 189, 248) : new Color(15, 23, 42));
+                c.setForeground(isSelected ? Color.BLACK : Color.WHITE);
+                return c;
+            }
+        };
+
         levelFilter = new JComboBox<>(levels);
-        levelFilter.setFont(new Font("Arial", Font.PLAIN, 14));
+        levelFilter.setUI(new javax.swing.plaf.basic.BasicComboBoxUI());
+        levelFilter.setRenderer(darkRenderer);
+        levelFilter.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        levelFilter.setBackground(new Color(15, 23, 42));
+        levelFilter.setForeground(Color.WHITE);
+        levelFilter.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(56, 189, 248), 1, true),
+            BorderFactory.createEmptyBorder(2, 5, 2, 5)
+        ));
         levelFilter.addActionListener(e -> updateTable());
 
         JLabel sortLabel = new JLabel("Sort:");
-        sortLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        String[] sortOptions = {"Highest to Lowest", "Lowest to Highest"};
+        sortLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        sortLabel.setForeground(Color.WHITE);
+        String[] sortOptions = {"Highest First", "Lowest First"};
         sortOrder = new JComboBox<>(sortOptions);
-        sortOrder.setFont(new Font("Arial", Font.PLAIN, 14));
+        sortOrder.setUI(new javax.swing.plaf.basic.BasicComboBoxUI());
+        sortOrder.setRenderer(darkRenderer);
+        sortOrder.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        sortOrder.setBackground(new Color(15, 23, 42));
+        sortOrder.setForeground(Color.WHITE);
+        sortOrder.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(56, 189, 248), 1, true),
+            BorderFactory.createEmptyBorder(2, 5, 2, 5)
+        ));
         sortOrder.addActionListener(e -> updateTable());
 
         controlPanel.add(searchLabel);
@@ -794,7 +1218,7 @@ class LeaderboardPanel extends JPanel {
         controlPanel.add(sortLabel);
         controlPanel.add(sortOrder);
 
-        // Table
+        // table
         String[] columns = {"Rank", "Player", "Score", "Level", "Date"};
         tableModel = new DefaultTableModel(new Object[0][0], columns) {
             public boolean isCellEditable(int row, int column) {
@@ -802,28 +1226,137 @@ class LeaderboardPanel extends JPanel {
             }
         };
         table = new JTable(tableModel);
-        table.setFont(new Font("Arial", Font.PLAIN, 14));
-        table.setRowHeight(30);
-        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
+        table.setOpaque(false);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
+        table.setRowHeight(50);
+        
+        // Custom Header
+        table.getTableHeader().setOpaque(false);
+        table.getTableHeader().setBackground(new Color(15, 23, 42));
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 18));
+        
+        table.getTableHeader().setDefaultRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                c.setBackground(new Color(15, 23, 42));
+                c.setForeground(Color.WHITE);
+                c.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                
+                if (column <= 3) {
+                    setHorizontalAlignment(SwingConstants.CENTER);
+                } else {
+                    setHorizontalAlignment(SwingConstants.LEFT);
+                }
+                
+                setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+                return c;
+            }
+        });
+
+        table.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            Color[] rowColors = {
+                new Color(247, 133, 60), 
+                new Color(236, 156, 51), 
+                new Color(95, 191, 80),  
+                new Color(63, 166, 245),  
+                new Color(217, 66, 84),  
+                new Color(73, 153, 225),  
+                new Color(254, 189, 39), 
+                new Color(68, 162, 72),  
+                new Color(55, 197, 241),  
+                new Color(167, 85, 224), 
+                new Color(185, 85, 237)  
+            };
+
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                int colorIndex = row % rowColors.length;
+                Color bg = rowColors[colorIndex];
+                c.setBackground(bg);
+                
+                double luminance = (0.299 * bg.getRed() + 0.587 * bg.getGreen() + 0.114 * bg.getBlue()) / 255.0;
+                if (luminance > 0.6) {
+                    c.setForeground(Color.BLACK);
+                } else {
+                    c.setForeground(Color.WHITE);
+                }
+                
+                if (column == 0 || column == 2) {
+                    setFont(new Font("Consolas", Font.BOLD, 20)); 
+                } else {
+                    setFont(new Font("Segoe UI", Font.BOLD, 18)); 
+                }
+                
+                if (column <= 3) { 
+                    setHorizontalAlignment(SwingConstants.CENTER);
+                } else {
+                    setHorizontalAlignment(SwingConstants.LEFT);
+                }
+                
+                setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+
+                return c;
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         // Back Button
-        JButton backButton = new JButton("Back to Menu");
-        backButton.setFont(new Font("Arial", Font.BOLD, 18));
-        backButton.setBackground(new Color(168, 85, 247));
-        backButton.setForeground(Color.BLACK);
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setOpaque(false);
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        GlowingButton backButton = new GlowingButton("Back to Menu", new Color(150, 150, 150), false);
+        backButton.setPreferredSize(new Dimension(200, 50));
+        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        backButton.setForeground(Color.WHITE);
         backButton.addActionListener(e -> game.showPanel("menu"));
+        bottomPanel.add(backButton);
 
-        whitePanel.add(titleLabel, BorderLayout.NORTH);
-        whitePanel.add(controlPanel, BorderLayout.BEFORE_FIRST_LINE);
-        whitePanel.add(scrollPane, BorderLayout.CENTER);
-        whitePanel.add(backButton, BorderLayout.SOUTH);
+        wrapperPanel.add(titleLabel, BorderLayout.NORTH);
+        
+        JPanel centerContainer = new JPanel(new BorderLayout(0, 20));
+        centerContainer.setOpaque(false);
+        centerContainer.add(controlPanel, BorderLayout.NORTH);
+        centerContainer.add(scrollPane, BorderLayout.CENTER);
+        
+        wrapperPanel.add(centerContainer, BorderLayout.CENTER);
+        wrapperPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        wrapperPanel.add(whitePanel, BorderLayout.CENTER);
         add(wrapperPanel, BorderLayout.CENTER);
 
         updateTable();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth();
+        int h = getHeight();
+
+        Color centerColor = new Color(30, 58, 138); 
+        Color edgeColor = new Color(15, 23, 42); 
+        
+        java.awt.geom.Point2D center = new java.awt.geom.Point2D.Float(w / 2f, h / 2f);
+        float radius = (float) Math.max(w, h);
+        float[] dist = {0.0f, 1.0f};
+        Color[] colors = {centerColor, edgeColor};
+        java.awt.RadialGradientPaint p = new java.awt.RadialGradientPaint(center, radius, dist, colors);
+        
+        g2.setPaint(p);
+        g2.fillRect(0, 0, w, h);
+        g2.dispose();
     }
 
     private void updateTable() {
@@ -871,9 +1404,10 @@ class GameBoardPanel extends JPanel {
     private int level;
     private ArrayList<Category> categories;
     private ArrayList<String> allWords;
-    private ArrayList<String> selectedWords;
-    private ArrayList<Category> solvedCategories;
+    private LinkedList<String> selectedWords;
+    private HashSet<Category> solvedCategories;
     private int mistakes = 0;
+    private int mistakesLimit = 4;
     private int timeLeft = 120;
     private javax.swing.Timer timer;
     private JPanel wordsPanel;
@@ -881,7 +1415,9 @@ class GameBoardPanel extends JPanel {
     private JLabel timerLabel;
     private JLabel mistakesLabel;
     private JLabel hintLabel;
+    private Queue<String> hintQueue;
     private long startTime;
+    private boolean gameOver = false;
 
     public GameBoardPanel(CodeCluster game, String playerName, int level) {
         this.game = game;
@@ -889,10 +1425,23 @@ class GameBoardPanel extends JPanel {
         this.playerName = playerName;
         this.level = level;
         this.categories = game.getGameData().getLevelCategories(level);
-        this.selectedWords = new ArrayList<>();
-        this.solvedCategories = new ArrayList<>();
+        this.selectedWords = new LinkedList<>();
+        this.solvedCategories = new HashSet<>();
+        this.hintQueue = new LinkedList<>();
         this.allWords = new ArrayList<>();
         this.startTime = System.currentTimeMillis();
+
+        // Set time and mistakes limit based on level
+        if (level >= 1 && level <= 2) {
+            timeLeft = 120; // 2 minutes
+            mistakesLimit = 4;
+        } else if (level >= 3 && level <= 4) {
+            timeLeft = 180; // 3 minutes
+            mistakesLimit = 5;
+        } else if (level == 5) {
+            timeLeft = 240; // 4 minutes
+            mistakesLimit = 6;
+        }
 
         for (Category cat : categories) {
             for (String word : cat.getWords()) {
@@ -906,6 +1455,8 @@ class GameBoardPanel extends JPanel {
 
         setupUI();
         startTimer();
+        // Start background music
+        soundManager.playBackgroundMusic();
     }
 
     private void setupUI() {
@@ -914,18 +1465,30 @@ class GameBoardPanel extends JPanel {
         topPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
 
         JLabel levelLabel = new JLabel("Level " + level + " - Player: " + playerName);
-        levelLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        levelLabel.setForeground(Color.WHITE);
+        levelLabel.setFont(new Font("Segoe UI", Font.PLAIN, 26));
+        levelLabel.setForeground(new Color(56, 189, 248));
 
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         statsPanel.setOpaque(false);
 
-        timerLabel = new JLabel("2:00");
-        timerLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        timerLabel.setForeground(Color.WHITE);
+        // Display correct initial time based on level
+        String initialTime;
+        if (level >= 1 && level <= 2) {
+            initialTime = "2:00";
+        } else if (level >= 3 && level <= 4) {
+            initialTime = "3:00";
+        } else if (level == 5) {
+            initialTime = "4:00";
+        } else {
+            initialTime = "2:00";
+        }
 
-        mistakesLabel = new JLabel("Mistakes: 0/4");
-        mistakesLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        timerLabel = new JLabel(initialTime);
+        timerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 26));
+        timerLabel.setForeground(new Color(56, 189, 248));
+
+        mistakesLabel = new JLabel("Mistakes: 0/" + mistakesLimit);
+        mistakesLabel.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         mistakesLabel.setForeground(Color.WHITE);
 
         statsPanel.add(timerLabel);
@@ -941,8 +1504,8 @@ class GameBoardPanel extends JPanel {
         centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 50, 10, 50));
 
         JLabel instructionLabel = new JLabel("Create four groups of four!", SwingConstants.CENTER);
-        instructionLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        instructionLabel.setForeground(Color.WHITE);
+        instructionLabel.setFont(new Font("Segoe UI", Font.PLAIN, 26));
+        instructionLabel.setForeground(new Color(56, 189, 248));
         instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         hintLabel = new JLabel(" ");
@@ -954,21 +1517,23 @@ class GameBoardPanel extends JPanel {
         solvedPanel.setLayout(new BoxLayout(solvedPanel, BoxLayout.Y_AXIS));
         solvedPanel.setOpaque(false);
 
-        wordsPanel = new JPanel(new GridLayout(0, 4, 10, 10));
+        wordsPanel = new JPanel(new GridLayout(0, 4, 15, 15));
         wordsPanel.setOpaque(false);
         updateWordsPanel();
 
-        JPanel buttonsPanel = new JPanel(new FlowLayout());
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         buttonsPanel.setOpaque(false);
 
-        JButton shuffleButton = new JButton("Shuffle");
-        JButton deselectButton = new JButton("Deselect All");
-        JButton submitButton = new JButton("Submit");
-        JButton backButton = new JButton("Back to Menu");
-
+        JButton shuffleButton = createBottomButton("Shuffle");
         shuffleButton.addActionListener(e -> shuffleWords());
+
+        JButton deselectButton = createBottomButton("Deselect All");
         deselectButton.addActionListener(e -> deselectAll());
+
+        JButton submitButton = createBottomButton("Submit");
         submitButton.addActionListener(e -> submitGuess());
+
+        JButton backButton = createBottomButton("Back to Menu");
         backButton.addActionListener(e -> {
             soundManager.playClick();
             timer.stop();
@@ -987,11 +1552,20 @@ class GameBoardPanel extends JPanel {
         centerPanel.add(solvedPanel);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         centerPanel.add(wordsPanel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
         centerPanel.add(buttonsPanel);
 
         add(topPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
+    }
+
+    private JButton createBottomButton(String text) {
+        GlowingButton btn = new GlowingButton(text, new Color(200, 200, 220), false);
+        btn.setPreferredSize(new Dimension(160, 50));
+        btn.setMaximumSize(new Dimension(160, 50));
+        btn.setFont(new Font("Arial", Font.PLAIN, 18));
+        btn.setForeground(Color.WHITE);
+        return btn;
     }
 
     private void updateWordsPanel() {
@@ -1008,17 +1582,13 @@ class GameBoardPanel extends JPanel {
             }
 
             if (!isSolved) {
-                JButton wordButton = new JButton(word);
-                wordButton.setFont(new Font("Arial", Font.BOLD, 14));
-
-                if (selectedWords.contains(word)) {
-                    wordButton.setBackground(new Color(34, 197, 94));
-                    wordButton.setForeground(Color.GREEN);
-                } else {
-                    wordButton.setBackground(new Color(243, 244, 246));
-                    wordButton.setForeground(Color.BLACK);
-                }
-
+                Color glow = selectedWords.contains(word) ? new Color(34, 197, 94) : new Color(56, 189, 248);
+                GlowingButton wordButton = new GlowingButton(word, glow, true);
+                wordButton.setHoverGreen(true);
+                wordButton.setPreferredSize(new Dimension(160, 60)); // for GridLayout
+                wordButton.setFont(new Font("Arial", Font.BOLD, 18));
+                wordButton.setForeground(new Color(15, 23, 42));
+                
                 wordButton.addActionListener(e -> {
                     soundManager.playClick();
                     toggleWord(word);
@@ -1031,6 +1601,7 @@ class GameBoardPanel extends JPanel {
     }
 
     private void toggleWord(String word) {
+        if (gameOver) return;
         if (selectedWords.contains(word)) {
             selectedWords.remove(word);
         } else if (selectedWords.size() < 4) {
@@ -1040,6 +1611,7 @@ class GameBoardPanel extends JPanel {
     }
 
     private void shuffleWords() {
+        if (gameOver) return;
         ArrayList<String> unsolved = new ArrayList<>();
         for (String word : allWords) {
             boolean isSolved = false;
@@ -1066,11 +1638,28 @@ class GameBoardPanel extends JPanel {
     }
 
     private void deselectAll() {
+        if (gameOver) return;
         selectedWords.clear();
         updateWordsPanel();
     }
 
+    private Color getDifficultyColor(int difficulty) {
+        switch (difficulty) {
+            case 1:
+                return new Color(234, 179, 8);        // Yellow (easiest)
+            case 2:
+                return new Color(34, 197, 94);        // Green
+            case 3:
+                return new Color(59, 130, 246);       // Blue
+            case 4:
+                return new Color(168, 85, 247);       // Purple (most difficult)
+            default:
+                return new Color(251, 191, 36);       // Default yellow
+        }
+    }
+
     private void submitGuess() {
+        if (gameOver) return;
         if (selectedWords.size() != 4) return;
 
         Category matchedCategory = null;
@@ -1085,19 +1674,20 @@ class GameBoardPanel extends JPanel {
             solvedCategories.add(matchedCategory);
             selectedWords.clear();
             timeLeft += 2;
+            hintQueue.clear();
+            hintQueue.offer(" ");
             hintLabel.setText(" ");
 
-            JPanel categoryPanel = new JPanel();
-            categoryPanel.setBackground(new Color(251, 191, 36));
-            categoryPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-            categoryPanel.setMaximumSize(new Dimension(800, 80));
+            Color difficultyColor = getDifficultyColor(matchedCategory.getDifficulty());
+            GlowingButton catLabel = new GlowingButton(matchedCategory.getName() + ": " +
+                String.join(", ", matchedCategory.getWords()), difficultyColor, true);
+            catLabel.setPreferredSize(new Dimension(800, 60));
+            catLabel.setMaximumSize(new Dimension(800, 60));
+            catLabel.setFont(new Font("Arial", Font.BOLD, 18));
+            catLabel.setForeground(new Color(15, 23, 42));
+            catLabel.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 
-            JLabel catLabel = new JLabel(matchedCategory.getName() + ": " +
-                String.join(", ", matchedCategory.getWords()));
-            catLabel.setFont(new Font("Arial", Font.BOLD, 16));
-            categoryPanel.add(catLabel);
-
-            solvedPanel.add(categoryPanel);
+            solvedPanel.add(catLabel);
             solvedPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
             if (solvedCategories.size() == categories.size()) {
@@ -1113,18 +1703,26 @@ class GameBoardPanel extends JPanel {
             }
 
             if (maxMatch == 3) {
-                hintLabel.setText("One away! You're so close!");
+                hintQueue.clear();
+                String hint = "One away! You're so close!";
+                hintQueue.offer(hint);
+                hintLabel.setText(hint);
             } else if (maxMatch == 2) {
-                hintLabel.setText("Two away! Keep trying!");
+                hintQueue.clear();
+                String hint = "Two away! Keep trying!";
+                hintQueue.offer(hint);
+                hintLabel.setText(hint);
             } else {
+                hintQueue.clear();
+                hintQueue.offer(" ");
                 hintLabel.setText(" ");
             }
 
             mistakes++;
-            mistakesLabel.setText("Mistakes: " + mistakes + "/4");
+            mistakesLabel.setText("Mistakes: " + mistakes + "/" + mistakesLimit);
             selectedWords.clear();
 
-            if (mistakes >= 4) {
+            if (mistakes >= mistakesLimit) {
                 endGame();
             }
         }
@@ -1150,6 +1748,8 @@ class GameBoardPanel extends JPanel {
     }
 
     private void endGame() {
+        if (gameOver) return;
+        gameOver = true;
         timer.stop();
 
         long timeTaken = (System.currentTimeMillis() - startTime) / 1000;
@@ -1184,6 +1784,14 @@ class GameBoardPanel extends JPanel {
             game.getGameData().addScore(score);
         }
 
+        // Play appropriate sound effect and stop BGM
+        soundManager.stopBackgroundMusic();
+        if (levelCompleted) {
+            soundManager.playWinSound();
+        } else {
+            soundManager.playGameOverSound();
+        }
+
         showGameCompleteDialog(totalScore, achievements, levelCompleted);
     }
 
@@ -1194,75 +1802,293 @@ class GameBoardPanel extends JPanel {
     }
 
     private void showGameCompleteDialog(int score, ArrayList<String> achievements, boolean levelCompleted) {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), levelCompleted ? "Level Complete!" : "Game Over", true);
-        dialog.setLayout(new BorderLayout());
-        dialog.setSize(500, 400);
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Code Cluster", true);
+        dialog.setSize(500, levelCompleted ? 650 : 520);
+        dialog.setResizable(false);
         dialog.setLocationRelativeTo(this);
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        JPanel mainPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
 
-        String title;
-        if (levelCompleted) {
-            title = level == 5 ? "Game Complete!" : "Level Complete!";
-        } else {
-            title = "Game Over!";
-        }
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
+                Color centerColor = new Color(30, 58, 138); 
+                Color edgeColor = new Color(15, 23, 42); 
+                
+                java.awt.geom.Point2D center = new java.awt.geom.Point2D.Float(w / 2f, h / 2f);
+                float radius = (float) Math.max(w, h);
+                float[] dist = {0.0f, 1.0f};
+                Color[] colors = {centerColor, edgeColor};
+                RadialGradientPaint p = new RadialGradientPaint(center, radius, dist, colors);
+                
+                g2.setPaint(p);
+                g2.fillRect(0, 0, w, h);
+                g2.dispose();
+            }
+        };
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(40, 30, 40, 30));
+
+        String titleText = levelCompleted ? (level == 5 ? "Game Complete!" : "Level Complete!") : "GAME OVER!";
+        
+        JLabel titleLabel = new JLabel(titleText, SwingConstants.CENTER) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                FontMetrics fm = g2.getFontMetrics(getFont());
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = fm.getAscent();
+                
+                Color glow = levelCompleted ? new Color(56, 189, 248) : new Color(239, 68, 68);
+                
+                for (int i = 1; i <= 6; i++) {
+                    g2.setColor(new Color(glow.getRed(), glow.getGreen(), glow.getBlue(), 30 - i * 4));
+                    g2.drawString(getText(), x - i, y);
+                    g2.drawString(getText(), x + i, y);
+                    g2.drawString(getText(), x, y - i);
+                    g2.drawString(getText(), x, y + i);
+                }
+                
+                if (!levelCompleted) {
+                    g2.setColor(glow);
+                    g2.drawString(getText(), x - 1, y - 1);
+                    g2.drawString(getText(), x + 1, y - 1);
+                    g2.drawString(getText(), x - 1, y + 1);
+                    g2.drawString(getText(), x + 1, y + 1);
+                    g2.setColor(new Color(15, 23, 42)); 
+                } else {
+                    g2.setColor(new Color(224, 242, 254));
+                }
+                g2.drawString(getText(), x, y);
+                g2.dispose();
+            }
+        };
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 46));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setMaximumSize(new Dimension(500, 70));
+        mainPanel.add(titleLabel);
 
-        JLabel scoreLabel = new JLabel("Score: " + score);
-        scoreLabel.setFont(new Font("Arial", Font.BOLD, 32));
-        scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        if (!levelCompleted) {
+            JLabel subLabel = new JLabel("Out of Mistakes", SwingConstants.CENTER);
+            subLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+            subLabel.setForeground(Color.WHITE);
+            subLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            mainPanel.add(subLabel);
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+        } else {
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            JLabel scoreLabel = new JLabel("Score: " + score, SwingConstants.CENTER) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    FontMetrics fm = g2.getFontMetrics(getFont());
+                    int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                    int y = fm.getAscent();
+                    
+                    Color glow = new Color(251, 191, 36); 
+                    for (int i = 1; i <= 4; i++) {
+                        g2.setColor(new Color(glow.getRed(), glow.getGreen(), glow.getBlue(), 40 - i * 8));
+                        g2.drawString(getText(), x - i, y);
+                        g2.drawString(getText(), x + i, y);
+                        g2.drawString(getText(), x, y - i);
+                        g2.drawString(getText(), x, y + i);
+                    }
+                    g2.setColor(new Color(253, 230, 138));
+                    g2.drawString(getText(), x, y);
+                    g2.dispose();
+                }
+            };
+            scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
+            scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            scoreLabel.setMaximumSize(new Dimension(500, 50));
+            mainPanel.add(scoreLabel);
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+        }
 
-        panel.add(titleLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 20)));
-        panel.add(scoreLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+        DarkRoundedPanel infoPanel = new DarkRoundedPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        infoPanel.setMaximumSize(new Dimension(420, 300));
 
-        if (levelCompleted && !achievements.isEmpty()) {
-            JLabel achLabel = new JLabel("Achievements:");
-            achLabel.setFont(new Font("Arial", Font.BOLD, 20));
-            achLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            panel.add(achLabel);
+        if (!levelCompleted) {
+            JPanel p1 = new JPanel(new GridBagLayout()) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(0, 0, 0, 80));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                    g2.dispose();
+                }
+            };
+            p1.setOpaque(false);
+            p1.setMaximumSize(new Dimension(360, 60));
+            p1.setPreferredSize(new Dimension(360, 60));
+            
+            JLabel scoreTextLabel = new JLabel("Score: " + score, SwingConstants.CENTER);
+            scoreTextLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+            scoreTextLabel.setForeground(new Color(239, 68, 68)); 
+            p1.add(scoreTextLabel);
+
+            infoPanel.add(p1);
+            infoPanel.add(Box.createRigidArea(new Dimension(0, 25)));
+        }
+
+        JLabel achTitle = new JLabel("Achievements:", SwingConstants.CENTER);
+        achTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        achTitle.setForeground(Color.WHITE);
+        achTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        infoPanel.add(achTitle);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        if (achievements.isEmpty()) {
+            JLabel noneLabel = new JLabel("None", SwingConstants.CENTER);
+            noneLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+            noneLabel.setForeground(new Color(156, 163, 175));
+            noneLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            infoPanel.add(noneLabel);
+        } else {
+            ImageIcon starIcon = null;
+            try {
+                ImageIcon original = new ImageIcon("star.png");
+                if (original.getIconWidth() > 0) {
+                    Image img = original.getImage();
+                    
+                    java.awt.image.ImageFilter filter = new java.awt.image.RGBImageFilter() {
+                        @Override
+                        public final int filterRGB(int x, int y, int rgb) {
+                            int r = (rgb >> 16) & 0xFF;
+                            int g = (rgb >> 8) & 0xFF;
+                            int b = rgb & 0xFF;
+                            if (r >= 250 && g >= 250 && b >= 250) {
+                                return 0x00FFFFFF & rgb;
+                            }
+                            return rgb;
+                        }
+                    };
+                    java.awt.image.ImageProducer ip = new java.awt.image.FilteredImageSource(img.getSource(), filter);
+                    img = java.awt.Toolkit.getDefaultToolkit().createImage(ip);
+                    
+                    img = img.getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+                    starIcon = new ImageIcon(img);
+                }
+            } catch (Exception e) {}
 
             for (String ach : achievements) {
-                JLabel achItem = new JLabel("• " + ach);
-                achItem.setFont(new Font("Arial", Font.PLAIN, 16));
-                achItem.setAlignmentX(Component.CENTER_ALIGNMENT);
-                panel.add(achItem);
+                JPanel itemPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10)) {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.setColor(new Color(255, 255, 255, 15));
+                        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                        g2.setColor(new Color(255, 255, 255, 30));
+                        g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 10, 10);
+                        g2.dispose();
+                    }
+                };
+                itemPanel.setOpaque(false);
+                itemPanel.setMaximumSize(new Dimension(360, 45));
+                
+                JLabel achItem = new JLabel(ach);
+                if (starIcon != null) {
+                    achItem.setIcon(starIcon);
+                    achItem.setIconTextGap(10);
+                } else {
+                    String iconStr = "⭐";
+                    if (ach.contains("Speed Demon")) iconStr = "⚡";
+                    else if (ach.contains("Master Mind")) iconStr = "🧠";
+                    else if (ach.contains("Time Lord")) iconStr = "⏳";
+                    else if (ach.contains("Perfect Game")) iconStr = "🏆";
+                    achItem.setText(iconStr + "  " + ach);
+                }
+                
+                achItem.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+                achItem.setForeground(Color.WHITE);
+                itemPanel.add(achItem);
+                
+                infoPanel.add(itemPanel);
+                infoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
             }
         }
 
-        panel.add(Box.createRigidArea(new Dimension(0, 30)));
+        mainPanel.add(infoPanel);
+        mainPanel.add(Box.createVerticalGlue());
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        buttonPanel.setOpaque(false);
 
-        if (level < 5) {
-            JButton nextButton = new JButton("Next Level");
-            nextButton.setFont(new Font("Arial", Font.BOLD, 18));
+        if (levelCompleted && level < 5) {
+            GlowingButton nextButton = new GlowingButton("Next Level", new Color(34, 197, 94), false);
+            nextButton.setPreferredSize(new Dimension(190, 55));
+            nextButton.setMinimumSize(new Dimension(190, 55));
+            nextButton.setMaximumSize(new Dimension(190, 55));
+            nextButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
+            nextButton.setForeground(Color.WHITE);
             nextButton.addActionListener(e -> {
+                soundManager.playClick();
                 dialog.dispose();
                 game.nextLevel();
             });
             buttonPanel.add(nextButton);
+        } else if (!levelCompleted) {
+            GlowingButton tryAgainButton = new GlowingButton("Try Again", new Color(239, 68, 68), false);
+            tryAgainButton.setPreferredSize(new Dimension(190, 55));
+            tryAgainButton.setMinimumSize(new Dimension(190, 55));
+            tryAgainButton.setMaximumSize(new Dimension(190, 55));
+            tryAgainButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
+            tryAgainButton.setForeground(Color.WHITE);
+            tryAgainButton.addActionListener(e -> {
+                soundManager.playClick();
+                dialog.dispose();
+                game.startGame(playerName);
+            });
+            buttonPanel.add(tryAgainButton);
         }
 
-        JButton menuButton = new JButton("Main Menu");
-        menuButton.setFont(new Font("Arial", Font.BOLD, 18));
+        GlowingButton menuButton = new GlowingButton("Main Menu", new Color(150, 150, 150), false);
+        menuButton.setPreferredSize(new Dimension(190, 55));
+        menuButton.setMinimumSize(new Dimension(190, 55));
+        menuButton.setMaximumSize(new Dimension(190, 55));
+        menuButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        menuButton.setForeground(Color.WHITE);
         menuButton.addActionListener(e -> {
+            soundManager.playClick();
             dialog.dispose();
             game.showPanel("menu");
         });
         buttonPanel.add(menuButton);
 
-        panel.add(buttonPanel);
+        mainPanel.add(buttonPanel);
 
-        dialog.add(panel);
+        dialog.setContentPane(mainPanel);
         dialog.setVisible(true);
     }
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth();
+        int h = getHeight();
+
+        Color centerColor = new Color(30, 58, 138); 
+        Color edgeColor = new Color(15, 23, 42); 
+        
+        java.awt.geom.Point2D center = new java.awt.geom.Point2D.Float(w / 2f, h / 2f);
+        float radius = (float) Math.max(w, h);
+        float[] dist = {0.0f, 1.0f};
+        Color[] colors = {centerColor, edgeColor};
+        RadialGradientPaint p = new RadialGradientPaint(center, radius, dist, colors);
+        
+        g2.setPaint(p);
+        g2.fillRect(0, 0, w, h);
+        g2.dispose();
+    }
 }
-
-
