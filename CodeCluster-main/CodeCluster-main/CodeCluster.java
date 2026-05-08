@@ -240,14 +240,14 @@ class SoundManager {
 class GameData {
     private LinkedList<String> playerNames;
     private TreeMap<String, ArrayList<Score>> scores;
-    private HashMap<Integer, ArrayList<ArrayList<Category>>> levelData;
+    private TreeMap<Integer, ArrayList<ArrayList<Category>>> levelData;
     private boolean sfxEnabled;
     private Stack<GameState> gameHistory;
 
     public GameData() {
         playerNames = new LinkedList<>();
         scores = new TreeMap<>();
-        levelData = new HashMap<>();
+        levelData = new TreeMap<>();
         sfxEnabled = true;
         gameHistory = new Stack<>();
         initializeLevelData();
@@ -257,93 +257,93 @@ class GameData {
         // Level 1 - 2 alternative sets of 4 categories
         ArrayList<ArrayList<Category>> level1Sets = new ArrayList<>();
         ArrayList<Category> level1a = new ArrayList<>();
-        level1a.add(new Category("Java Keywords", new String[]{"STATIC", "VOID", "CLASS", "PUBLIC"}));
-        level1a.add(new Category("Data Structures", new String[]{"ARRAY", "STACK", "QUEUE", "TREE"}));
-        level1a.add(new Category("Primitive Types", new String[]{"INT", "BOOLEAN", "CHAR", "DOUBLE"}));
-        level1a.add(new Category("Common Methods", new String[]{"GET", "SET", "PUSH", "POP"}));
+        level1a.add(new Category("Java Keywords", new String[]{"STATIC", "VOID", "CLASS", "PUBLIC"}, 1));
+        level1a.add(new Category("Data Structures", new String[]{"ARRAY", "STACK", "QUEUE", "TREE"}, 2));
+        level1a.add(new Category("Primitive Types", new String[]{"INT", "BOOLEAN", "CHAR", "DOUBLE"}, 1));
+        level1a.add(new Category("Common Methods", new String[]{"GET", "SET", "PUSH", "POP"}, 1));
         level1Sets.add(level1a);
 
         ArrayList<Category> level1b = new ArrayList<>();
-        level1b.add(new Category("Control Keywords", new String[]{"IF", "ELSE", "SWITCH", "CASE"}));
-        level1b.add(new Category("Collection Types", new String[]{"LIST", "SET", "MAP", "QUEUE"}));
-        level1b.add(new Category("Numeric Types", new String[]{"BYTE", "SHORT", "INT", "LONG"}));
-        level1b.add(new Category("Common Operators", new String[]{"PLUS", "MINUS", "MULTIPLY", "DIVIDE"}));
+        level1b.add(new Category("Control Keywords", new String[]{"IF", "ELSE", "SWITCH", "CASE"}, 1));
+        level1b.add(new Category("Collection Types", new String[]{"LIST", "SET", "MAP", "QUEUE"}, 2));
+        level1b.add(new Category("Numeric Types", new String[]{"BYTE", "SHORT", "INT", "LONG"}, 1));
+        level1b.add(new Category("Common Operators", new String[]{"PLUS", "MINUS", "MULTIPLY", "DIVIDE"}, 1));
         level1Sets.add(level1b);
         levelData.put(1, level1Sets);
 
         // Level 2 - 2 alternative sets of 4 categories
         ArrayList<ArrayList<Category>> level2Sets = new ArrayList<>();
         ArrayList<Category> level2a = new ArrayList<>();
-        level2a.add(new Category("OOP Concepts", new String[]{"POLYMORPHISM", "INHERITANCE", "ENCAPSULATION", "ABSTRACTION"}));
-        level2a.add(new Category("Loop Keywords", new String[]{"FOR", "WHILE", "DO", "FOREACH"}));
-        level2a.add(new Category("String Methods", new String[]{"LENGTH", "SUBSTRING", "CONCAT", "TRIM"}));
-        level2a.add(new Category("Boolean Operators", new String[]{"AND", "OR", "NOT", "XOR"}));
+        level2a.add(new Category("OOP Concepts", new String[]{"POLYMORPHISM", "INHERITANCE", "ENCAPSULATION", "ABSTRACTION"}, 3));
+        level2a.add(new Category("Loop Keywords", new String[]{"FOR", "WHILE", "DO", "FOREACH"}, 2));
+        level2a.add(new Category("String Methods", new String[]{"LENGTH", "SUBSTRING", "CONCAT", "TRIM"}, 2));
+        level2a.add(new Category("Boolean Operators", new String[]{"AND", "OR", "NOT", "XOR"}, 2));
         level2Sets.add(level2a);
 
         ArrayList<Category> level2b = new ArrayList<>();
-        level2b.add(new Category("Array Methods", new String[]{"SORT", "FILL", "COPY", "BINARYSEARCH"}));
-        level2b.add(new Category("Exception Types", new String[]{"IOEXCEPTION", "NULLPOINTER", "ARITHMETIC", "INDEXOUTOFBOUNDS"}));
-        level2b.add(new Category("Access Modifiers", new String[]{"PUBLIC", "PRIVATE", "PROTECTED", "DEFAULT"}));
-        level2b.add(new Category("Inheritance Keywords", new String[]{"EXTENDS", "IMPLEMENTS", "SUPER", "THIS"}));
+        level2b.add(new Category("Array Methods", new String[]{"SORT", "FILL", "COPY", "BINARYSEARCH"}, 3));
+        level2b.add(new Category("Exception Types", new String[]{"IOEXCEPTION", "NULLPOINTER", "ARITHMETIC", "INDEXOUTOFBOUNDS"}, 3));
+        level2b.add(new Category("Access Modifiers", new String[]{"PUBLIC", "PRIVATE", "PROTECTED", "DEFAULT"}, 2));
+        level2b.add(new Category("Inheritance Keywords", new String[]{"EXTENDS", "IMPLEMENTS", "SUPER", "THIS"}, 3));
         level2Sets.add(level2b);
         levelData.put(2, level2Sets);
 
         // Level 3 - 2 alternative sets of 5 categories
         ArrayList<ArrayList<Category>> level3Sets = new ArrayList<>();
         ArrayList<Category> level3a = new ArrayList<>();
-        level3a.add(new Category("Java Collections", new String[]{"LIST", "MAP", "SET", "HASHMAP"}));
-        level3a.add(new Category("Exception Handling", new String[]{"TRY", "CATCH", "THROW", "FINALLY"}));
-        level3a.add(new Category("Access Modifiers", new String[]{"PRIVATE", "PROTECTED", "PACKAGE", "DEFAULT"}));
-        level3a.add(new Category("Wrapper Classes", new String[]{"INTEGER", "LONG", "FLOAT", "CHARACTER"}));
-        level3a.add(new Category("Keywords", new String[]{"FINAL", "SUPER", "THIS", "EXTENDS"}));
+        level3a.add(new Category("Java Collections", new String[]{"LIST", "MAP", "SET", "HASHMAP"}, 3));
+        level3a.add(new Category("Exception Handling", new String[]{"TRY", "CATCH", "THROW", "FINALLY"}, 3));
+        level3a.add(new Category("Access Modifiers", new String[]{"PRIVATE", "PROTECTED", "PACKAGE", "DEFAULT"}, 2));
+        level3a.add(new Category("Wrapper Classes", new String[]{"INTEGER", "LONG", "FLOAT", "CHARACTER"}, 3));
+        level3a.add(new Category("Keywords", new String[]{"FINAL", "SUPER", "THIS", "EXTENDS"}, 3));
         level3Sets.add(level3a);
 
         ArrayList<Category> level3b = new ArrayList<>();
-        level3b.add(new Category("Stream Methods", new String[]{"FILTER", "MAP", "COLLECT", "FOR_EACH"}));
-        level3b.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "TERMINATED"}));
-        level3b.add(new Category("Numeric Wrappers", new String[]{"DOUBLE", "FLOAT", "INTEGER", "LONG"}));
-        level3b.add(new Category("String Builders", new String[]{"APPEND", "INSERT", "DELETE", "TOSTRING"}));
-        level3b.add(new Category("Concurrency", new String[]{"SYNCHRONIZED", "VOLATILE", "LOCK", "ATOMIC"}));
+        level3b.add(new Category("Stream Methods", new String[]{"FILTER", "MAP", "COLLECT", "FOR_EACH"}, 4));
+        level3b.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "TERMINATED"}, 4));
+        level3b.add(new Category("Numeric Wrappers", new String[]{"DOUBLE", "FLOAT", "INTEGER", "LONG"}, 2));
+        level3b.add(new Category("String Builders", new String[]{"APPEND", "INSERT", "DELETE", "TOSTRING"}, 3));
+        level3b.add(new Category("Concurrency", new String[]{"SYNCHRONIZED", "VOLATILE", "LOCK", "ATOMIC"}, 4));
         level3Sets.add(level3b);
         levelData.put(3, level3Sets);
 
         // Level 4 - 2 alternative sets of 5 categories
         ArrayList<ArrayList<Category>> level4Sets = new ArrayList<>();
         ArrayList<Category> level4a = new ArrayList<>();
-        level4a.add(new Category("Design Patterns", new String[]{"SINGLETON", "FACTORY", "OBSERVER", "DECORATOR"}));
-        level4a.add(new Category("Testing Terms", new String[]{"JUNIT", "MOCK", "ASSERT", "TEST"}));
-        level4a.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "WAITING"}));
-        level4a.add(new Category("Memory Areas", new String[]{"HEAP", "STACK", "METASPACE", "POOL"}));
-        level4a.add(new Category("Synchronization", new String[]{"LOCK", "SYNCHRONIZED", "VOLATILE", "ATOMIC"}));
+        level4a.add(new Category("Design Patterns", new String[]{"SINGLETON", "FACTORY", "OBSERVER", "DECORATOR"}, 4));
+        level4a.add(new Category("Testing Terms", new String[]{"JUNIT", "MOCK", "ASSERT", "TEST"}, 4));
+        level4a.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "WAITING"}, 4));
+        level4a.add(new Category("Memory Areas", new String[]{"HEAP", "STACK", "METASPACE", "POOL"}, 4));
+        level4a.add(new Category("Synchronization", new String[]{"LOCK", "SYNCHRONIZED", "VOLATILE", "ATOMIC"}, 4));
         level4Sets.add(level4a);
 
         ArrayList<Category> level4b = new ArrayList<>();
-        level4b.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}));
-        level4b.add(new Category("Web Concepts", new String[]{"HTTP", "HTTPS", "REST", "SOAP"}));
-        level4b.add(new Category("Database Terms", new String[]{"SQL", "INDEX", "JOIN", "TRANSACTION"}));
-        level4b.add(new Category("Caching", new String[]{"MEMCACHED", "REDIS", "GUAVA", "CACHE"}));
-        level4b.add(new Category("Testing Frameworks", new String[]{"TESTNG", "SPOCK", "CUCUMBER", "MOCKITO"}));
+        level4b.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}, 4));
+        level4b.add(new Category("Web Concepts", new String[]{"HTTP", "HTTPS", "REST", "SOAP"}, 4));
+        level4b.add(new Category("Database Terms", new String[]{"SQL", "INDEX", "JOIN", "TRANSACTION"}, 4));
+        level4b.add(new Category("Caching", new String[]{"MEMCACHED", "REDIS", "GUAVA", "CACHE"}, 4));
+        level4b.add(new Category("Testing Frameworks", new String[]{"TESTNG", "SPOCK", "CUCUMBER", "MOCKITO"}, 4));
         level4Sets.add(level4b);
         levelData.put(4, level4Sets);
 
         // Level 5 - 2 alternative sets of 6 categories
         ArrayList<ArrayList<Category>> level5Sets = new ArrayList<>();
         ArrayList<Category> level5a = new ArrayList<>();
-        level5a.add(new Category("Spring Framework", new String[]{"BEAN", "AUTOWIRED", "COMPONENT", "SERVICE"}));
-        level5a.add(new Category("SQL Keywords", new String[]{"SELECT", "INSERT", "UPDATE", "DELETE"}));
-        level5a.add(new Category("Git Commands", new String[]{"COMMIT", "PUSH", "PULL", "MERGE"}));
-        level5a.add(new Category("HTTP Methods", new String[]{"GET", "POST", "PUT", "PATCH"}));
-        level5a.add(new Category("JSON Operations", new String[]{"PARSE", "STRINGIFY", "SERIALIZE", "DESERIALIZE"}));
-        level5a.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}));
+        level5a.add(new Category("Spring Framework", new String[]{"BEAN", "AUTOWIRED", "COMPONENT", "SERVICE"}, 4));
+        level5a.add(new Category("SQL Keywords", new String[]{"SELECT", "INSERT", "UPDATE", "DELETE"}, 4));
+        level5a.add(new Category("Git Commands", new String[]{"COMMIT", "PUSH", "PULL", "MERGE"}, 3));
+        level5a.add(new Category("HTTP Methods", new String[]{"GET", "POST", "PUT", "PATCH"}, 3));
+        level5a.add(new Category("JSON Operations", new String[]{"PARSE", "STRINGIFY", "SERIALIZE", "DESERIALIZE"}, 3));
+        level5a.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}, 4));
         level5Sets.add(level5a);
 
         ArrayList<Category> level5b = new ArrayList<>();
-        level5b.add(new Category("Cloud Platforms", new String[]{"AZURE", "AWS", "GCP", "HEROKU"}));
-        level5b.add(new Category("CI/CD", new String[]{"JENKINS", "GITHUB", "GITLAB", "AZUREDEVOPS"}));
-        level5b.add(new Category("Container Tools", new String[]{"DOCKER", "KUBERNETES", "PODMAN", "SWARM"}));
-        level5b.add(new Category("API Methods", new String[]{"GET", "POST", "DELETE", "PATCH"}));
-        level5b.add(new Category("Data Formats", new String[]{"JSON", "XML", "YAML", "CSV"}));
-        level5b.add(new Category("Security", new String[]{"OAUTH", "JWT", "SSL", "TLS"}));
+        level5b.add(new Category("Cloud Platforms", new String[]{"AZURE", "AWS", "GCP", "HEROKU"}, 4));
+        level5b.add(new Category("CI/CD", new String[]{"JENKINS", "GITHUB", "GITLAB", "AZUREDEVOPS"}, 4));
+        level5b.add(new Category("Container Tools", new String[]{"DOCKER", "KUBERNETES", "PODMAN", "SWARM"}, 4));
+        level5b.add(new Category("API Methods", new String[]{"GET", "POST", "DELETE", "PATCH"}, 3));
+        level5b.add(new Category("Data Formats", new String[]{"JSON", "XML", "YAML", "CSV"}, 3));
+        level5b.add(new Category("Security", new String[]{"OAUTH", "JWT", "SSL", "TLS"}, 4));
         level5Sets.add(level5b);
         levelData.put(5, level5Sets);
     }
@@ -465,10 +465,12 @@ class GameData {
 class Category implements Serializable {
     private String name;
     private String[] words;
+    private int difficulty; // 1=Yellow (easy), 2=Green, 3=Blue, 4=Purple (hard)
 
-    public Category(String name, String[] words) {
+    public Category(String name, String[] words, int difficulty) {
         this.name = name;
         this.words = words;
+        this.difficulty = difficulty;
     }
 
     public String getName() {
@@ -477,6 +479,10 @@ class Category implements Serializable {
 
     public String[] getWords() {
         return words;
+    }
+
+    public int getDifficulty() {
+        return difficulty;
     }
 
     public boolean matches(List<String> selectedWords) {
@@ -493,6 +499,21 @@ class Category implements Serializable {
             if (selectedWords.contains(word)) count++;
         }
         return count;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Category category = (Category) obj;
+        return difficulty == category.difficulty && 
+               name.equals(category.name) && 
+               java.util.Arrays.equals(words, category.words);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(name, difficulty, java.util.Arrays.hashCode(words));
     }
 }
 
@@ -1383,9 +1404,10 @@ class GameBoardPanel extends JPanel {
     private int level;
     private ArrayList<Category> categories;
     private ArrayList<String> allWords;
-    private ArrayList<String> selectedWords;
-    private ArrayList<Category> solvedCategories;
+    private LinkedList<String> selectedWords;
+    private HashSet<Category> solvedCategories;
     private int mistakes = 0;
+    private int mistakesLimit = 4;
     private int timeLeft = 120;
     private javax.swing.Timer timer;
     private JPanel wordsPanel;
@@ -1393,6 +1415,7 @@ class GameBoardPanel extends JPanel {
     private JLabel timerLabel;
     private JLabel mistakesLabel;
     private JLabel hintLabel;
+    private Queue<String> hintQueue;
     private long startTime;
     private boolean gameOver = false;
 
@@ -1402,10 +1425,23 @@ class GameBoardPanel extends JPanel {
         this.playerName = playerName;
         this.level = level;
         this.categories = game.getGameData().getLevelCategories(level);
-        this.selectedWords = new ArrayList<>();
-        this.solvedCategories = new ArrayList<>();
+        this.selectedWords = new LinkedList<>();
+        this.solvedCategories = new HashSet<>();
+        this.hintQueue = new LinkedList<>();
         this.allWords = new ArrayList<>();
         this.startTime = System.currentTimeMillis();
+
+        // Set time and mistakes limit based on level
+        if (level >= 1 && level <= 2) {
+            timeLeft = 120; // 2 minutes
+            mistakesLimit = 4;
+        } else if (level >= 3 && level <= 4) {
+            timeLeft = 180; // 3 minutes
+            mistakesLimit = 5;
+        } else if (level == 5) {
+            timeLeft = 240; // 4 minutes
+            mistakesLimit = 6;
+        }
 
         for (Category cat : categories) {
             for (String word : cat.getWords()) {
@@ -1435,11 +1471,23 @@ class GameBoardPanel extends JPanel {
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         statsPanel.setOpaque(false);
 
-        timerLabel = new JLabel("2:00");
+        // Display correct initial time based on level
+        String initialTime;
+        if (level >= 1 && level <= 2) {
+            initialTime = "2:00";
+        } else if (level >= 3 && level <= 4) {
+            initialTime = "3:00";
+        } else if (level == 5) {
+            initialTime = "4:00";
+        } else {
+            initialTime = "2:00";
+        }
+
+        timerLabel = new JLabel(initialTime);
         timerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 26));
         timerLabel.setForeground(new Color(56, 189, 248));
 
-        mistakesLabel = new JLabel("Mistakes: 0/4");
+        mistakesLabel = new JLabel("Mistakes: 0/" + mistakesLimit);
         mistakesLabel.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         mistakesLabel.setForeground(Color.WHITE);
 
@@ -1595,6 +1643,21 @@ class GameBoardPanel extends JPanel {
         updateWordsPanel();
     }
 
+    private Color getDifficultyColor(int difficulty) {
+        switch (difficulty) {
+            case 1:
+                return new Color(234, 179, 8);        // Yellow (easiest)
+            case 2:
+                return new Color(34, 197, 94);        // Green
+            case 3:
+                return new Color(59, 130, 246);       // Blue
+            case 4:
+                return new Color(168, 85, 247);       // Purple (most difficult)
+            default:
+                return new Color(251, 191, 36);       // Default yellow
+        }
+    }
+
     private void submitGuess() {
         if (gameOver) return;
         if (selectedWords.size() != 4) return;
@@ -1611,10 +1674,13 @@ class GameBoardPanel extends JPanel {
             solvedCategories.add(matchedCategory);
             selectedWords.clear();
             timeLeft += 2;
+            hintQueue.clear();
+            hintQueue.offer(" ");
             hintLabel.setText(" ");
 
+            Color difficultyColor = getDifficultyColor(matchedCategory.getDifficulty());
             GlowingButton catLabel = new GlowingButton(matchedCategory.getName() + ": " +
-                String.join(", ", matchedCategory.getWords()), new Color(251, 191, 36), true);
+                String.join(", ", matchedCategory.getWords()), difficultyColor, true);
             catLabel.setPreferredSize(new Dimension(800, 60));
             catLabel.setMaximumSize(new Dimension(800, 60));
             catLabel.setFont(new Font("Arial", Font.BOLD, 18));
@@ -1637,18 +1703,26 @@ class GameBoardPanel extends JPanel {
             }
 
             if (maxMatch == 3) {
-                hintLabel.setText("One away! You're so close!");
+                hintQueue.clear();
+                String hint = "One away! You're so close!";
+                hintQueue.offer(hint);
+                hintLabel.setText(hint);
             } else if (maxMatch == 2) {
-                hintLabel.setText("Two away! Keep trying!");
+                hintQueue.clear();
+                String hint = "Two away! Keep trying!";
+                hintQueue.offer(hint);
+                hintLabel.setText(hint);
             } else {
+                hintQueue.clear();
+                hintQueue.offer(" ");
                 hintLabel.setText(" ");
             }
 
             mistakes++;
-            mistakesLabel.setText("Mistakes: " + mistakes + "/4");
+            mistakesLabel.setText("Mistakes: " + mistakes + "/" + mistakesLimit);
             selectedWords.clear();
 
-            if (mistakes >= 4) {
+            if (mistakes >= mistakesLimit) {
                 endGame();
             }
         }
@@ -2018,5 +2092,3 @@ class GameBoardPanel extends JPanel {
         g2.dispose();
     }
 }
-
-
