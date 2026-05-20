@@ -15,12 +15,7 @@ public class CodeCluster extends JFrame {
     private String currentPlayer;
     private int currentLevel = 1;
     private SoundManager soundManager;
-    // TreeMap: Data structure for storing level scores in sorted order
-    // Algorithm: Red-Black Tree (self-balancing BST) for sorted key-value storage
-    // Sorting: Keys automatically maintained in ascending order (Integer.compareTo())
-    // Time Complexity: O(log n) for put/get/remove operations due to tree balancing
-    // Use: Maintains scores for each level with keys in ascending order
-    private TreeMap<Integer, Integer> levelScores;
+    private TreeMap<Integer, Integer> levelScores; // Track scores for each level
 
     public CodeCluster() {
         soundManager = new SoundManager();
@@ -29,7 +24,7 @@ public class CodeCluster extends JFrame {
         levelScores = new TreeMap<>();
 
         setTitle("Code Cluster");
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 700);
         setLocationRelativeTo(null);
 
@@ -44,22 +39,6 @@ public class CodeCluster extends JFrame {
         add(mainPanel);
         showPanel("menu");
         setVisible(true);
-
-        // Add window listener for close button confirmation
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                CustomConfirmationDialog dialog = new CustomConfirmationDialog(
-                    CodeCluster.this,
-                    "Exit Confirmation",
-                    "Are you sure you want to exit?",
-                    ""
-                );
-                if (dialog.showDialog()) {
-                    System.exit(0);
-                }
-            }
-        });
     }
 
     public void showPanel(String panelName) {
@@ -270,55 +249,24 @@ class SoundManager {
 }
 
 class GameData {
-    // LinkedList: Data structure for storing player names
-    // Search Algorithm: Linear Search - O(n) for contains() operation
-    // Time Complexity: O(n) for search, O(1) for insertion/deletion at ends
-    // Use: Maintains list of player names with efficient add/remove operations
     private LinkedList<String> playerNames;
-    
-    // TreeMap: Sorted map for storing player scores
-    // Algorithm: Red-Black Tree with String key comparisons
-    // Sorting: Automatically maintains keys in lexicographic order (String.compareTo())
-    // Search Algorithm: Binary Search Tree traversal - O(log n) for containsKey/get
-    // Time Complexity: O(log n) for put/get operations
-    // Use: Maps player names to their scores with automatic sorting
     private TreeMap<String, ArrayList<Score>> scores;
-    
-    // TreeMap with nested ArrayList: Hierarchical data structure for game levels
-    // Algorithm: Red-Black Tree for outer layer, ArrayList for inner collections
-    // Sorting: TreeMap maintains Integer keys (levels) in ascending order
-    // Search Algorithm: BST search for level key (O(log n)), ArrayList for categories (O(1) access)
-    // Time Complexity: TreeMap O(log n), ArrayList O(1) for access
-    // Use: Organizes categories by level with multiple alternative sets per level
     private TreeMap<Integer, ArrayList<ArrayList<Category>>> levelData;
-    
     private boolean sfxEnabled;
-    
-    // Stack: Last-In-First-Out (LIFO) data structure for game history
-    // Time Complexity: O(1) for push/pop operations
-    // Use: Stores game states for undo/navigation through game history
     private Stack<GameState> gameHistory;
 
     public GameData() {
-        // Initialize LinkedList for player names - maintains insertion order and allows O(1) add at ends
         playerNames = new LinkedList<>();
-        // Initialize TreeMap for scores - auto-sorts by player name (String key)
         scores = new TreeMap<>();
-        // Initialize TreeMap for level data - auto-sorts by level (Integer key)
         levelData = new TreeMap<>();
         sfxEnabled = true;
-        // Initialize Stack for game history - allows tracking of game states
         gameHistory = new Stack<>();
         initializeLevelData();
     }
 
     private void initializeLevelData() {
         // Level 1 - 2 alternative sets of 4 categories
-        // ArrayList (nested): Flexible array-like structure with O(1) access and O(n) insertion
-        // Use: Stores multiple alternative category sets for each level
         ArrayList<ArrayList<Category>> level1Sets = new ArrayList<>();
-        // ArrayList: Dynamic array for storing Category objects
-        // Time Complexity: O(1) for access, O(n) for insertion/deletion
         ArrayList<Category> level1a = new ArrayList<>();
         level1a.add(new Category("Java Keywords", new String[]{"STATIC", "VOID", "CLASS", "PUBLIC"}, 1));
         level1a.add(new Category("Data Structures", new String[]{"ARRAY", "STACK", "QUEUE", "TREE"}, 2));
@@ -326,7 +274,6 @@ class GameData {
         level1a.add(new Category("Common Methods", new String[]{"GET", "SET", "PUSH", "POP"}, 1));
         level1Sets.add(level1a);
 
-        // ArrayList: Another set of categories for level 1 variant
         ArrayList<Category> level1b = new ArrayList<>();
         level1b.add(new Category("Control Keywords", new String[]{"IF", "ELSE", "SWITCH", "CASE"}, 1));
         level1b.add(new Category("Collection Types", new String[]{"LIST", "SET", "MAP", "QUEUE"}, 2));
@@ -336,9 +283,7 @@ class GameData {
         levelData.put(1, level1Sets);
 
         // Level 2 - 2 alternative sets of 4 categories
-        // ArrayList (nested): Maintains alternative category sets per level
         ArrayList<ArrayList<Category>> level2Sets = new ArrayList<>();
-        // ArrayList: Collection of categories for level 2 variant A
         ArrayList<Category> level2a = new ArrayList<>();
         level2a.add(new Category("OOP Concepts", new String[]{"POLYMORPHISM", "INHERITANCE", "ENCAPSULATION", "ABSTRACTION"}, 3));
         level2a.add(new Category("Loop Keywords", new String[]{"FOR", "WHILE", "DO", "FOREACH"}, 2));
@@ -346,7 +291,6 @@ class GameData {
         level2a.add(new Category("Boolean Operators", new String[]{"AND", "OR", "NOT", "XOR"}, 2));
         level2Sets.add(level2a);
 
-        // ArrayList: Collection of categories for level 2 variant B
         ArrayList<Category> level2b = new ArrayList<>();
         level2b.add(new Category("Array Methods", new String[]{"SORT", "FILL", "COPY", "BINARYSEARCH"}, 3));
         level2b.add(new Category("Exception Types", new String[]{"IOEXCEPTION", "NULLPOINTER", "ARITHMETIC", "INDEXOUTOFBOUNDS"}, 3));
@@ -356,9 +300,7 @@ class GameData {
         levelData.put(2, level2Sets);
 
         // Level 3 - 2 alternative sets of 5 categories
-        // ArrayList (nested): Manages alternative difficulty sets for level 3
         ArrayList<ArrayList<Category>> level3Sets = new ArrayList<>();
-        // ArrayList: Category collection for level 3 variant A
         ArrayList<Category> level3a = new ArrayList<>();
         level3a.add(new Category("Java Collections", new String[]{"LIST", "MAP", "SET", "HASHMAP"}, 3));
         level3a.add(new Category("Exception Handling", new String[]{"TRY", "CATCH", "THROW", "FINALLY"}, 3));
@@ -367,7 +309,6 @@ class GameData {
         level3a.add(new Category("Keywords", new String[]{"FINAL", "SUPER", "THIS", "EXTENDS"}, 3));
         level3Sets.add(level3a);
 
-        // ArrayList: Category collection for level 3 variant B
         ArrayList<Category> level3b = new ArrayList<>();
         level3b.add(new Category("Stream Methods", new String[]{"FILTER", "MAP", "COLLECT", "FOR_EACH"}, 4));
         level3b.add(new Category("Thread States", new String[]{"NEW", "RUNNABLE", "BLOCKED", "TERMINATED"}, 4));
@@ -378,9 +319,7 @@ class GameData {
         levelData.put(3, level3Sets);
 
         // Level 4 - 2 alternative sets of 5 categories
-        // ArrayList (nested): Organizes difficulty variants for level 4
         ArrayList<ArrayList<Category>> level4Sets = new ArrayList<>();
-        // ArrayList: Category collection for level 4 variant A
         ArrayList<Category> level4a = new ArrayList<>();
         level4a.add(new Category("Design Patterns", new String[]{"SINGLETON", "FACTORY", "OBSERVER", "DECORATOR"}, 4));
         level4a.add(new Category("Testing Terms", new String[]{"JUNIT", "MOCK", "ASSERT", "TEST"}, 4));
@@ -389,7 +328,6 @@ class GameData {
         level4a.add(new Category("Synchronization", new String[]{"LOCK", "SYNCHRONIZED", "VOLATILE", "ATOMIC"}, 4));
         level4Sets.add(level4a);
 
-        // ArrayList: Category collection for level 4 variant B
         ArrayList<Category> level4b = new ArrayList<>();
         level4b.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}, 4));
         level4b.add(new Category("Web Concepts", new String[]{"HTTP", "HTTPS", "REST", "SOAP"}, 4));
@@ -400,9 +338,7 @@ class GameData {
         levelData.put(4, level4Sets);
 
         // Level 5 - 2 alternative sets of 6 categories
-        // ArrayList (nested): Final level's category set organization
         ArrayList<ArrayList<Category>> level5Sets = new ArrayList<>();
-        // ArrayList: Category collection for level 5 variant A
         ArrayList<Category> level5a = new ArrayList<>();
         level5a.add(new Category("Spring Framework", new String[]{"BEAN", "AUTOWIRED", "COMPONENT", "SERVICE"}, 4));
         level5a.add(new Category("SQL Keywords", new String[]{"SELECT", "INSERT", "UPDATE", "DELETE"}, 4));
@@ -412,7 +348,6 @@ class GameData {
         level5a.add(new Category("Build Tools", new String[]{"MAVEN", "GRADLE", "ANT", "NPM"}, 4));
         level5Sets.add(level5a);
 
-        // ArrayList: Category collection for level 5 variant B
         ArrayList<Category> level5b = new ArrayList<>();
         level5b.add(new Category("Cloud Platforms", new String[]{"AZURE", "AWS", "GCP", "HEROKU"}, 4));
         level5b.add(new Category("CI/CD", new String[]{"JENKINS", "GITHUB", "GITLAB", "AZUREDEVOPS"}, 4));
@@ -425,21 +360,15 @@ class GameData {
     }
 
     public ArrayList<Category> getLevelCategories(int level) {
-        // Binary Search Tree Search Algorithm: TreeMap.get() uses BST navigation
-        // Time Complexity: O(log n) where n is number of levels
-        // Retrieve nested ArrayList from TreeMap - retrieves set of alternative categories for a level
         ArrayList<ArrayList<Category>> sets = levelData.get(level);
         if (sets == null || sets.isEmpty()) {
             return new ArrayList<>();
         }
-        // ArrayList: Randomly select one variant set and return new ArrayList copy
         ArrayList<Category> selected = sets.get(new Random().nextInt(sets.size()));
         return new ArrayList<>(selected);
     }
 
     public void addPlayerName(String name) {
-        // Linear Search Algorithm: O(n) time complexity
-        // Searches through LinkedList to check if player name already exists
         if (!playerNames.contains(name)) {
             playerNames.add(name);
             saveData();
@@ -452,14 +381,9 @@ class GameData {
 
     public void addScore(Score score) {
         String key = score.getPlayerName();
-        // TreeMap: Check if player key exists; uses balanced binary search tree for efficiency
-        // Binary Search Tree Search Algorithm: O(log n) time complexity
-        // TreeMap maintains keys sorted using Comparable interface on String type
         if (!scores.containsKey(key)) {
-            // ArrayList: Create new collection to store all scores for this player
             scores.put(key, new ArrayList<>());
         }
-        // ArrayList: Add new score to the player's score collection
         scores.get(key).add(score);
         saveData();
     }
@@ -469,11 +393,7 @@ class GameData {
     }
 
     public ArrayList<Score> getFlatScores() {
-        // ArrayList: Flatten nested structure - collects all scores from TreeMap values
         ArrayList<Score> allScores = new ArrayList<>();
-        // Tree Traversal Algorithm: Iterates through TreeMap in sorted order (in-order traversal)
-        // TreeMap maintains natural ordering by key (String names) - automatically sorted
-        // Time Complexity: O(n) where n is total number of entries in TreeMap
         for (ArrayList<Score> scoreList : scores.values()) {
             allScores.addAll(scoreList);
         }
@@ -517,8 +437,6 @@ class GameData {
             File playerFile = new File("players.dat");
             if (playerFile.exists()) {
                 ObjectInputStream ois = new ObjectInputStream(new FileInputStream(playerFile));
-                // LinkedList: Deserialize LinkedList from file (maintains insertion order)
-                // Search Algorithm: Linear search O(n) if contains() is called on loaded list
                 playerNames = (LinkedList<String>) ois.readObject();
                 ois.close();
             }
@@ -527,9 +445,6 @@ class GameData {
             File scoresFile = new File("scores.dat");
             if (scoresFile.exists()) {
                 ObjectInputStream ois = new ObjectInputStream(new FileInputStream(scoresFile));
-                // TreeMap with ArrayList: Deserialize hierarchical data structure (sorted player names with their scores)
-                // Sorting: TreeMap automatically maintains keys in sorted order using natural ordering
-                // Search Algorithm: Binary Search Tree search for O(log n) containsKey() operations
                 scores = (TreeMap<String, ArrayList<Score>>) ois.readObject();
                 ois.close();
             }
@@ -547,12 +462,10 @@ class GameData {
     }
 
     public void pushGameState(GameState state) {
-        // Stack: Push operation adds element to top of stack (LIFO - Last In First Out)
         gameHistory.push(state);
     }
 
     public GameState popGameState() {
-        // Stack: Pop operation removes and returns top element; useful for game undo feature
         if (!gameHistory.isEmpty()) {
             return gameHistory.pop();
         }
@@ -562,9 +475,6 @@ class GameData {
 
 class Category implements Serializable {
     private String name;
-    // Array: Static array of Strings for storing category words
-    // Time Complexity: O(1) for access, fixed size
-    // Use: Stores exactly 4 words per category for game matching
     private String[] words;
     private int difficulty; // 1=Yellow (easy), 2=Green, 3=Blue, 4=Purple (hard)
 
@@ -588,11 +498,7 @@ class Category implements Serializable {
 
     public boolean matches(List<String> selectedWords) {
         if (selectedWords.size() != 4) return false;
-        // Array: Iterate through array elements to check against List collection
         for (String word : words) {
-            // List: Use contains() method - Linear Search Algorithm
-            // Time Complexity: O(n) for each word, O(4n) = O(n) overall
-            // Sequential search through List to find matching word
             if (!selectedWords.contains(word)) return false;
         }
         return true;
@@ -600,12 +506,7 @@ class Category implements Serializable {
 
     public int getMatchCount(List<String> selectedWords) {
         int count = 0;
-        // Array with List: Count matching elements between array and List collection
         for (String word : words) {
-            // Linear Search Algorithm: O(n) time complexity per word
-            // List.contains(): Performs sequential search through entire List
-            // Search Method: Compares word parameter using equals() to each element
-            // Total complexity: O(4 * n) = O(n) where n is size of selectedWords
             if (selectedWords.contains(word)) count++;
         }
         return count;
@@ -615,21 +516,14 @@ class Category implements Serializable {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        // Equality Comparison Algorithm: O(n) for array comparison
         Category category = (Category) obj;
         return difficulty == category.difficulty && 
                name.equals(category.name) && 
-               // Array Comparison: Arrays.equals() compares array contents
-               // Linear comparison - O(n) where n is array length
                java.util.Arrays.equals(words, category.words);
     }
 
     @Override
     public int hashCode() {
-        // Hashing: Generate hash code for Category object using all fields
-        // Hash Function: Uses Objects.hash() for String and int, Arrays.hashCode() for String array
-        // Hash Collision Resolution: Handled internally by Java's Objects.hash() implementation
-        // Time Complexity: O(n) where n is the number of fields (constant for this class)
         return java.util.Objects.hash(name, difficulty, java.util.Arrays.hashCode(words));
     }
 }
@@ -640,9 +534,6 @@ class Score implements Serializable {
     private int level;
     private int attempt;
     private String date;
-    // ArrayList: Dynamic collection for storing player achievements
-    // Time Complexity: O(1) for add, O(n) for search
-    // Use: Tracks all achievements earned in a game session
     private ArrayList<String> achievements;
 
     public Score(String playerName, int score, int level, int attempt, ArrayList<String> achievements) {
@@ -650,8 +541,6 @@ class Score implements Serializable {
         this.score = score;
         this.level = level;
         this.attempt = attempt;
-        // ArrayList: Initialize with provided achievements list
-        // Search Algorithm: Linear search O(n) if contains() is called on achievements
         this.achievements = achievements;
         this.date = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date());
     }
@@ -661,8 +550,6 @@ class Score implements Serializable {
     public int getLevel() { return level; }
     public int getAttempt() { return attempt; }
     public String getDate() { return date; }
-    // ArrayList: Return the achievements collection for this score
-    // Search: Linear search O(n) if contains() is used on returned list
     public ArrayList<String> getAchievements() { return achievements; }
 }
 
@@ -767,15 +654,7 @@ class MainMenuPanel extends JPanel {
         JButton exitButton = new GlowingButton("Exit", new Color(239, 68, 68)); // Red
         exitButton.addActionListener(e -> {
             soundManager.playClick();
-            CustomConfirmationDialog dialog = new CustomConfirmationDialog(
-                game,
-                "Exit Confirmation",
-                "Are you sure you want to exit?",
-                ""
-            );
-            if (dialog.showDialog()) {
-                System.exit(0);
-            }
+            System.exit(0);
         });
         buttonsPanel.add(exitButton);
 
@@ -1146,15 +1025,7 @@ class NameSelectionPanel extends JPanel {
         backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         backButton.addActionListener(e -> {
             soundManager.playClick();
-            CustomConfirmationDialog dialog = new CustomConfirmationDialog(
-                (Frame) SwingUtilities.getWindowAncestor(game),
-                "Confirm Navigation",
-                "Return to main menu?",
-                ""
-            );
-            if (dialog.showDialog()) {
-                game.showPanel("menu");
-            }
+            game.showPanel("menu");
         });
         mainContainer.add(backButton);
 
@@ -1459,17 +1330,7 @@ class LeaderboardPanel extends JPanel {
         backButton.setPreferredSize(new Dimension(200, 50));
         backButton.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         backButton.setForeground(Color.WHITE);
-        backButton.addActionListener(e -> {
-            CustomConfirmationDialog dialog = new CustomConfirmationDialog(
-                (Frame) SwingUtilities.getWindowAncestor(game),
-                "Confirm Navigation",
-                "Return to main menu?",
-                ""
-            );
-            if (dialog.showDialog()) {
-                game.showPanel("menu");
-            }
-        });
+        backButton.addActionListener(e -> game.showPanel("menu"));
         bottomPanel.add(backButton);
 
         wrapperPanel.add(titleLabel, BorderLayout.NORTH);
@@ -1686,16 +1547,8 @@ class GameBoardPanel extends JPanel {
         JButton backButton = createBottomButton("Back to Menu");
         backButton.addActionListener(e -> {
             soundManager.playClick();
-            CustomConfirmationDialog dialog = new CustomConfirmationDialog(
-                (Frame) SwingUtilities.getWindowAncestor(this),
-                "Confirm Navigation",
-                "Return to main menu?",
-                "Your progress will be lost."
-            );
-            if (dialog.showDialog()) {
-                timer.stop();
-                game.showPanel("menu");
-            }
+            timer.stop();
+            game.showPanel("menu");
         });
 
         buttonsPanel.add(shuffleButton);
